@@ -1,3 +1,7 @@
+/*
+  Megan Jordal
+ */
+
 import java.util.Scanner;
 
 public class Corgi {
