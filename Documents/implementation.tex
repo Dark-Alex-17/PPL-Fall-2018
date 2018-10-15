@@ -1,0 +1,757 @@
+\input pictex
+\input /Users/Shared/TeX/defs
+
+\advance \hoffset 0.25 true in
+
+\def\inclassexercise{\item{$\Rightarrow$\quad\quad} {\bf In-Class Exercise:}\quad}
+\def\borderline{\medskip\hrule\bigskip}
+
+\startDoc{CS 3210 Fall 2018}{25}{Implementing a Programming Language}
+
+{\bigboldfont A Brief Look at More Serious Language Implementation}
+\bigskip
+
+We have already played some with language design and implementation---you were asked in Project 1
+to implement VPL, and I suffered greatly implementing Jive.  But, those languages have relatively simple
+structure and can be described just
+using finite automata.  Now we want to learn a little about implementing a language that is described using
+a {\it context free grammar}.    It turns out that if a language is described using a finite automaton to describe
+its meaningful chunks, and a context free grammar of the right form to describe its main structure,
+then we can implement the language using {\it recursive descent parsing}.
+\bigskip
+
+\Indent{.5}
+  Not that long ago,
+  probably every computer science program had a rather nasty required course known as
+ ``the compiler course.''    As this technology became more well-known and accepted, this
+ course gradually disappeared from the curriculum, but scraps of it remain in this course.
+ \medskip
+
+ We will make our work much easier by mostly
+ ignoring issues of {\it efficiency}, both in space and time.
+ For example, a real compiler tries to recover from errors and go on to report other errors, but
+ we will be happy to detect one error and stop.  And, a real compiler tries to generate code that
+ uses as little memory as is reasonable, and runs as quickly as is reasonable.
+ We won't be crazy about it in our upcoming work, but we will compromise efficiency whenever it saves us
+ work.  
+ \medskip
+ \Outdent
+
+{\bigboldfont Language Specification}
+\bigskip
+
+To specify a programming language, we have to specify its {\it grammar}---what sequences of symbols
+(or diagrammatic elements, if it's a non-textual language) form a syntactically legal program, and its
+{\it semantics}---the meaning of those sequences of symbols.
+\medskip
+
+To precisely specify the grammar of our language, we need to do some fairly abstract work (all of which overlaps the
+CS 3240 course, but with a more practical focus).
+\medskip
+
+We have already seen a little of both finite automata and context free grammars, but the following will be
+more detailed and organized.
+\medskip
+
+As we do the abstract stuff, we will have in mind two languages.  The first will be a
+simple calculator language.  The second will be the language that you will be asked to
+implement in Project 2.  Both of these languages will be designed and specified in the
+upcoming work.  The implementation of the simple calculator language through 
+a lexical phase and 
+recursive descent parsing will be worked out fully as an example, leaving you to do
+the same things on Project 2.
+\border
+
+{\bf Definition of a Language}
+\medskip
+
+Given a finite set, which is known as an {\it alphabet} (and can be thought of as some set
+of ordinary symbols), we define a {\it string\/}
+to be any finite sequence of members of the alphabet, and we define a {\it language\/} to 
+be any set of strings over the alphabet.
+\medskip
+
+\In
+     For this course, we are interested in situations where a single string is a program in some
+     programming language, and the language is the set of all syntactically legal programs.
+\medskip
+\Out
+\border
+
+{\bf Finite Automata}
+\medskip
+
+We already introduced finite automata, so let's do some examples that will
+be used in the simple calculator language.
+\border
+
+{\bf Exercise 9}
+\medskip
+
+Working in your small group, draw a finite automaton for each of the following languages:
+\medskip
+
+\Indent{1}
+\item{a.}  all strings that start with a lowercase letter, followed by zero or more letters or digits
+\medskip
+
+\item{b.}  all strings that represent a real number in the way usually
+used by humans (no scientific notation allowed), say in a math class.
+
+\border
+\Outdent
+
+{\bf The Concept of Lexical Analysis as Just a First Step in Parsing}
+\medskip
+
+It turns out that the FA technique is not expressive enough to describe the syntax we want
+to have for a typical programming language.  
+\medskip
+
+\In
+   Here's a proof of this fact:  we clearly want to have, in a typical
+   imperative language, the ability to write expressions
+   such as $((((((a))))))$, where the number of extra parentheses is unlimited.  Our parser needs
+   to be able to check whether there are as many left parentheses as right.  But, the FA technique
+   can't say this.  Suppose to the contrary that we have an FA that accepts all strings that
+   have $n$ left parentheses followed by {\tt a} followed by $n$ right parentheses.  Imagine that
+   you are looking at this wonderful diagram.  Since it is a {\it finite\/} state automaton, it has a
+   finite number of states, say $M$.  Now, feed this machine a string that has more than $M$
+   left parentheses, followed by an {\tt a}, followed by the same number of right parentheses.
+   Since there are only $M$ states, in processing the left parentheses, we will visit some state
+   twice, and there will be a loop in the machine that processes just one or more left parentheses.
+   Clearly this loop means that the machine will accept strings that it shouldn't accept.
+\medskip
+\Out
+
+Since the FA technique can't describe all the syntactic features we want in a programming 
+language, we will be forced to develop a more powerful approach.  But, the FA technique
+is still useful, because we will use it for the first phase of parsing, known as {\it lexical analysis}.
+This is a very simple idea:  we take the stream of physical symbols and use an FA to
+process them, producing either an error message or a stream of {\it tokens}.  A token is simply
+a higher-level symbol that is composed of one or more physical symbols.  Then the
+remaining parsing takes place on the sequence of tokens.   This is done purely as a
+matter of convenience and efficiency, because the technique we will develop to do the parsing
+is fully capable of doing the tokenizing part as well.
+\border
+
+\vfil\eject
+
+{\bigboldfont  Formal Grammars and Parsing}
+\medskip
+
+We will now learn a technique for specifying the syntax of a language that is more powerful
+than the FA approach.  One limited version of this approach will let us specify most of the
+syntax of a typical programming language.
+\bigskip
+
+A {\it formal grammar\/} consists of a set of {\it non-terminal symbols}, a set of {\it terminal symbols},
+and a set of {\it production rules}.  One non-terminal symbol is designated as the {\it start symbol}.
+\medskip
+
+\Indent{1}
+  As we saw in my specification of Jive, we will often use symbols written between angle brackets,
+  like {\tt <expr>}, to represent
+  non-terminal symbols.
+  Terminal symbols will be tokens produced by the lexical analysis phase.
+   \medskip
+   
+   For our early example we will tend to use uppercase letters for non-terminal symbols and
+   lowercase letters for terminal symbols.
+\Outdent
+
+A production rule has one or more symbols (both terminal and non-terminal allowed) known
+as the ``left hand side,'' followed
+by a right arrow, followed by one or more symbols known as the ``right hand side.''
+\medskip
+
+A {\it derivation\/} starts with the start symbol and proceeds by replacing any substring of
+the current string that occurs as the left hand side of a rule by the right hand side of that rule,
+continuing until a string is reached that has only terminal symbols in it.  At this point, that
+string of terminal symbols has been proven to be in the language accepted by the grammar.
+\medskip
+
+{\bf A Simple Example}
+\medskip
+
+Here is a simple grammar, where the non-terminals are $S$, $A$, and $B$, and the
+$S$ is the start symbol,
+and the terminal symbols are $a$, $b$, $c$, and $d$.
+\medskip
+
+$ S \rightarrow AB $
+
+$ A \rightarrow a A b $
+
+$ A \rightarrow c $
+
+$ B \rightarrow d $
+
+$ B \rightarrow d B $
+\medskip
+
+Here is a sample derivation of a string from this grammar, where each line
+involves one substitution:
+\medskip
+
+$S$
+
+$AB$
+
+$ a A b B$
+
+$ a a A b b B$
+
+$ a a c b b B $
+
+$ a a c b b d B $
+
+$ a a c b b d d B $
+
+$ a a c b b d d d $
+
+\medskip
+
+This derivation shows that {\tt aacbbddd} is in the language accepted by this grammar.
+\medskip
+
+\doit Determine the language accepted by this grammar.  Note that it
+has parts that could have been accomplished by the FA technique, and parts that
+could not.
+\border
+
+{\bf Context Free Grammars}
+\medskip
+
+This formal grammar technique
+is a very general tool, but we will focus on a special version known as a 
+{\it context free grammar} where the left hand side of a rule can only be a single non-terminal
+symbol.  
+\medskip
+
+Context free grammars are nice because on each step of a derivation, the only question is,
+which non-terminal symbol in the current string should we replace by using a rule where
+it occurs as the left hand side.    
+\medskip
+
+We can now think of what we really mean by parsing.  For a context free grammar, the
+challenge is to take a given string---an alleged program---and try to find a derivation.
+\medskip
+
+Context free grammars are used because they are powerful enough to specify most of
+what we want in the syntax of a language, but are still amenable to being parsed {\it efficiently}.
+\medskip
+
+It is also important to note that for the languages people  tend to use, apparently, the
+semantics (meaning) of a program are closely related to the syntactic structure.  
+\medskip
+
+\Indent{1}
+Here is a feature of a typical programming language that isn't captured, typically, by the
+context free grammar that specifies the syntax of the language:  local variables in Java
+have to be defined before they are used.  Typically the context free grammar
+says that the body of a method consists of a sequence of one or more statements, and
+statements are things like {\tt int x;} and {\tt x = 3;}, but the grammar doesn't specify that
+one has to occur before the other.  Those rules of the language have to be handled in
+some other way.
+\medskip
+\Outdent
+
+For context free grammars, we can improve on the notation of a derivation a lot by
+the {\it parse tree\/} concept.  Instead of recopying the current string on each step, we
+show the replacement of a left hand side non-terminal symbol by writing a child in the
+tree for each symbol in the right hand side.  Here is a parse tree for the first example
+given:
+\medskip
+
+$$
+\beginpicture
+\setcoordinatesystem units <1true pt,1true pt>
+    \put {S} at 150.0 120.0
+    \put {A} at 60.0 90.0
+    \put {B} at 210.0 90.0
+    \put {a} at 0.0 60.0
+    \put {A} at 60.0 60.0
+    \put {b} at 120.0 60.0
+    \put {d} at 180.0 60.0
+    \put {B} at 270.0 60.0
+    \put {a} at 30.0 30.0
+    \put {A} at 60.0 30.0
+    \put {b} at 90.0 30.0
+    \put {d} at 240.0 30.0
+    \put {B} at 300.0 30.0
+    \put {c} at 60.0 0.0
+    \put {d} at 300.0 0.0
+% Edge from 1 to 2:
+    \plot 141.0 117.0  68.0 92.0 /
+    \put {} at 141.0 117.0
+% Edge from 1 to 3:
+    \plot 158.0 115.0  201.0 94.0 /
+    \put {} at 158.0 115.0
+% Edge from 2 to 4:
+    \plot 51.0 85.0  8.0 64.0 /
+    \put {} at 51.0 85.0
+% Edge from 2 to 5:
+    \plot 60.0 81.0  60.0 69.0 /
+    \put {} at 60.0 81.0
+% Edge from 2 to 6:
+    \plot 68.0 85.0  111.0 64.0 /
+    \put {} at 68.0 85.0
+% Edge from 3 to 7:
+    \plot 203.0 83.0  186.0 66.0 /
+    \put {} at 203.0 83.0
+% Edge from 3 to 8:
+    \plot 218.0 85.0  261.0 64.0 /
+    \put {} at 218.0 85.0
+% Edge from 5 to 9:
+    \plot 53.0 53.0  36.0 36.0 /
+    \put {} at 53.0 53.0
+% Edge from 5 to 10:
+    \plot 60.0 51.0  60.0 39.0 /
+    \put {} at 60.0 51.0
+% Edge from 5 to 11:
+    \plot 66.0 53.0  83.0 36.0 /
+    \put {} at 66.0 53.0
+% Edge from 8 to 12:
+    \plot 263.0 53.0  246.0 36.0 /
+    \put {} at 263.0 53.0
+% Edge from 8 to 13:
+    \plot 276.0 53.0  293.0 36.0 /
+    \put {} at 276.0 53.0
+% Edge from 10 to 14:
+    \plot 60.0 21.0  60.0 9.0 /
+    \put {} at 60.0 21.0
+% Edge from 13 to 15:
+    \plot 300.0 21.0  300.0 9.0 /
+    \put {} at 300.0 21.0
+\endpicture
+$$
+\border
+
+\vfil\eject
+
+{\bf A Bad Way to Try to Express Expressions}
+\medskip
+
+Consider the following grammar, where $E$ is the start symbol, and 
+$V$ and $N$ are viewed as terminal symbols  namely tokens representing
+variables and numeric literals, and other symbols that are not uppercase letters
+are viewed as tokens.
+\medskip
+
+$ E \rightarrow N$
+
+$ E \rightarrow V$
+
+$ E \rightarrow E + E $
+
+$ E \rightarrow E * E $
+
+$ E \rightarrow (E)$
+\medskip
+
+This grammar seems reasonable, but it turns out to be a rather poor way to specify
+a language consisting of all mathematical expressions using variables, numeric literals,
+addition, multiplication, and parentheses.  For one thing, the grammar is ambiguous---there
+are strings that have significantly different parse trees.  For another, the grammar has no
+concept of operator precedence.
+\medskip
+
+\doit   Come up with some expressions and produce parse trees for them.
+Verify the complaints just made.
+\border
+
+{\bf A Classic Example of a Context Free Grammar}
+\medskip
+
+Now consider this grammar for the language of simple expressions, 
+where $E$ is the start symbol, and 
+$V$ and $N$ are viewed as terminal symbols, namely tokens representing
+variables and numeric literals, and other symbols that are not uppercase letters
+are viewed as tokens.
+\medskip
+
+$E \rightarrow T$
+
+$E \rightarrow T+E$
+
+$T \rightarrow F$
+
+$ T \rightarrow F * T$
+
+$F \rightarrow V$
+
+$F \rightarrow N$
+
+$F \rightarrow (E)$
+\medskip
+
+\doit  This grammar captures the syntax of an {\it expression} involving two
+binary operators with different precedence.  Produce parse trees for some expressions and
+note that the grammar is not ambiguous and enforces operator precedence.
+\border
+
+{\bf Parse Trees as Code}
+\medskip
+
+The previous example suggests a powerful idea:  if someone gives you a parse tree for an
+expression, and values for all the variables occurring, you can easily compute the value
+of the expression---and you can easily write code that interprets the parse tree.
+\medskip
+
+Thus, in a very real sense, the tree structure is a better programming language than
+the language described by the context free grammar, except for one big catch:  it's hard to
+read and write parse trees, compared to reading and writing strings.
+\border
+
+{\bf Exercise 10}
+\medskip
+
+Working in your small group, produce a parse tree for the following expression, using the good
+expression grammar.
+Then, assuming that $a=12$, $b=7$, and $c=2$, show how the parse tree can be used to
+compute the value of the expression---note how the value of each node in the parse tree
+is obtained from the values of its children.
+\medskip
+
+Use this expression:
+
+$$  7*a + (c*a*c+4*a)*b $$
+\border
+
+{\bf Designing and Specifying the Simple Calculator Language}
+\medskip
+
+Now we want to design (and then implement) a language that allows the user to
+perform a sequence of computations such as a person could do on a calculator.
+But, we want the language to allow use of expressions and assignment statements.
+\medskip
+
+\doit As a whole group, invent a name for this language, and write some example programs
+so everyone will see the sorts of things we want to allow, and the sorts of things we don't want
+to allow.
+\border
+
+{\bf Exercise 11}
+\medskip
+
+Working in your small group, specify the simple calculator language by determining its
+tokens (categories of conceptual symbols, such as probably {\tt <var>} for variable),
+drawing an FA for each kind of token, and writing a context free grammar for the
+language. 
+\medskip
+
+Use {\tt <program>} for the start variable, which should produce any possible program in the
+language.
+\border
+
+\doit Working back together as a whole group, write down the final  specification
+for the simple calculator language.
+\border
+
+{\bf Implementing the Lexical Phase}
+\medskip
+
+\doit As a whole group, produce a Java class named {\tt Lexer} that
+will take a file containing a program in the simple calculator language as input and produce a sequence of tokens.
+In addition to producing this stream of tokens, {\tt Lexer} should have the ability to ``put back'' a token, for convenience
+in the recursive descent parsing phase.  The point is that we will produce a grammar that will allow us to
+look ahead at the next token, thinking it will be part of the entity we are producing, and then realize from that next token
+that we are done with the entity we were producing, so it is convenient to put back the look ahead token.
+
+\vfil\eject
+%\bye
+
+{\bf Implementing The Simple Calculator Language}
+\medskip
+
+\doit
+ Working as a whole group,
+ finish the draft design of the simple calculator language,
+and write down a context free grammar to specify it.  
+\medskip
+
+\Indent{1}
+As we do this, we want to try to write the rules so that they process symbols on the
+left, leaving the recursive parts on the right.
+For example, if we want to say ``1 or more {\tt a}'s'' we could either use the
+rules
+$$ A \rightarrow Aa \;  \vert \; a $$
+or we could say
+$$ A \rightarrow aA \; \vert \; a $$
+
+with the same result from a theoretical perspective.
+But, because we want to use the {\it recursive descent parsing\/} technique (there are other
+parsing techniques that we will not study that like grammars in different forms),
+we will want to use the second approach.
+\medskip
+\Outdent
+
+\border
+
+\doit Working as a whole group, begin work on a class {\tt Parser} that will take
+a {\tt Lexer} as a source of tokens and produce a {\it parse tree\/} that represents a simple calculator
+language program in a way that it can be directly executed.
+\medskip
+
+\Indent{1}
+As a practical matter, to save some time
+we will begin with some old code that I produced for a different language and modify it massively
+to do the job for our new language.
+\medskip
+
+Note that along with the {\tt Lexer} and {\tt Parser} classes, this old code includes {\tt Token} and
+{\tt Node} classes that will be used extensively in our work.
+\medskip
+
+The classes {\tt Basic}, {\tt Camera}, and {\tt TreeViewer} support visualizing a parse tree for
+debugging and testing purposes.
+\medskip
+\Outdent
+
+As we will see, the recursive descent parsing technique involves writing a method for every non-terminal
+symbol in the grammar.  Each of these methods will consume a sequence of tokens and produce a
+node that is the root of a tree that is the translation of the corresponding chunk of code.
+\medskip
+
+Also, these methods will return {\tt null} if they realize that the next few tokens don't fit what they are
+expecting to see.  
+\medskip
+
+We will not take the time to be very careful about detecting and reporting errors in the source code.
+We will basically assume that the source code is correct.  But, when it makes sense to do so, we will
+notice errors and halt the parsing process with some error message to the programmer.
+\border
+
+\vfil\eject
+
+{\bf Final (?) Finite Automata for Lexer for Corgi}
+\bigskip
+
+\epsfbox{../Secret/Corgi/Figures/corgiFA.1}
+\border
+
+\doit Instructor will briefly discuss {\tt Lexer} and {\tt Parser} in preparation for Exercises 12 and 13.
+\border
+
+{\bf Exercise 12}
+Working in your small group, write the code for state 3, 4, and 5 in the {\tt Lexer.java} file for Corgi.
+To help you understand {\tt Lexer} and do this Exercise effectively, a number of trees have been
+killed to provide you with a printout of the existing code on the next pages.
+\vfil\eject
+
+\count255 1
+\numberedListing{../Corgi/Lexer.java}{\tt}
+\border
+
+{\bf Exercise 13}
+Working in your small group, write the code for {\tt parseFactor} in
+the class {\tt Parser}, listed on the next few pages.
+\bigskip
+
+Here is the draft context free grammar for Corgi (note some changes from our earlier version):
+\medskip
+
+{\baselineskip 0.95 \baselineskip
+\listing{../Corgi/corgiCFG.txt}
+
+\border}
+
+\count255 1
+\numberedListing{../Corgi/Parser.java}{\tt}
+
+\vfil\eject
+
+\doit  Instructor will discuss the minor changes to {\tt Parser} (listed in its entirety below)
+and draw a parse tree for
+a Corgi program.
+\border
+
+{\bf Exercise 14}
+Working in your small groups, construct the parse tree for {\tt quadroots} following the final (I hope!)
+version of {\tt Parser}.
+\border
+
+{\baselineskip 0.75\baselineskip
+\count255 1
+\font \smalltt cmtt10 scaled 800
+\numberedListing{../Corgi/Parser.java}{\smalltt}
+\border
+}
+
+{\bf Exercise 15}
+Below you will find a partial listing of the {\tt Node} class, namely the partially completed
+{\tt execute} and {\tt evaluate} methods.
+Working in your small groups, 
+write the missing code.
+\medskip
+
+Note that nodes have instance variables {\tt kind}, {\tt info} (both strings), and 
+{\tt first} and {\tt second} (both nodes).
+\medskip
+
+Also, there is a {\tt MemTable} class that has public methods
+
+ {\tt void store( String name, double value)}
+ 
+and 
+
+{\tt double retrieve( String name)} 
+\medskip
+
+If you need further details about any of the classes in the {\tt Corgi} project
+(namely {\tt Corgi}, {\tt Token}, {\tt Lexer}, {\tt Parser}, {\tt Node}, and {\tt MemTable},
+you should look at them online (assuming someone in your group has a computer in class).
+
+\vfil\eject
+
+\count255 136
+\numberedListing{../Corgi/partialNode.java}{\tt}
+
+\vfil\eject
+
+{\bigboldfont Designing Project 2}
+\medskip
+
+To keep Project 2 manageable (a first serious submission for Project 2 must be submitted by the time of Test 2---October 29),
+I have decided to make this project be to simply (we hope!) add some
+features to Corgi as follows.
+\medskip
+
+\Indent{1}
+First, we want to give the Corgi programmer the ability to define functions, and of course to call them.
+\medskip
+
+Second, we want to add branching to Corgi.
+\medskip
+\Outdent
+
+\doit Working as a whole group, design the finite automata for the Corgi {\tt Lexer}, and the
+context free grammar for the Corgi {\tt Parser}.
+Discuss the features we are not adding to Corgi, and perhaps decide to add some of them.
+As part of this design process, write some sample Corgi programs (these will also provide a
+starting point for testing your Project 2 work).
+\medskip
+
+\doit Once the syntax of the language is specified, try to specify the {\it semantics\/} of the language,
+and think about how execution/evaluation of the parse tree will be done.
+\bigskip
+
+{\bf Note:}  after we have made decisions about the new and improved Corgi,
+henceforth to be known as ``Corgi,''  I will document them.
+But, you should be able to start working on Project 2 right away, based on the informal
+documentation recorded during this class session.
+\border
+
+{\bigboldfont Project 2} [10 points] [first serious submission absolutely due by October 29]
+\medskip
+
+Implement the extended Corgi language as specified in class and in upcoming documents.
+Be alert for corrections to the Corgi specification that may need to be made as work proceeds.
+\medskip
+
+Be sure to test your implementation thoroughly.
+\medskip
+
+Email me your group's submission with a single {\tt zip} or {\tt jar} file attached, named either
+{\tt corgi.jar} or {\tt corgi.zip}.  This single file must contain all the source code files.
+Be sure to CC all group members on the email that submits your work.
+\medskip
+
+I must be able to extract all the Java source files from your submitted file into a folder, and then simply
+type at the command prompt:
+\medskip
+
+{\tt javac Corgi.java}
+
+{\tt java Corgi test3}
+\medskip
+
+in order to run the Corgi program in the file named {\tt test3}.
+\border
+
+\vfil\eject
+
+\bye
+
+{\bf Designing Project 2}
+\medskip
+
+\doit Discuss possibilities for Project 2 and decide what it should be.
+%      Then, we'll apply CYK and/or recursive descent to it
+\vfil\eject
+
+{\bigboldfont Course Policy Change}
+\medskip
+Test 2 is canceled, due to the facts that we haven't covered enough material suitable for fair assessment, 
+and we have just barely gotten to the main topics of language implementation.
+\medskip
+
+The test scheduled for April 13 will cover the material we have been and are still working on, along
+with some functional programming topics, about equally weighted.  The test at the time of the final exam
+will cover Clojure and Prolog topics.
+\medskip
+
+Your course grade will be figured with the 68\% for Tests divided either into 3 or 4, with the next test counting
+as two tests or one, and taking the maximum of the two calculations.
+\border
+
+{\bigboldfont Otter}
+\medskip
+
+I had been thinking Project 2 would be to finish implementing Otter, but now I'm thinking Project 2 will be
+to implement the ``simple example'' we started on February 28th.  We will spend a few more class periods
+working through implementation of Otter together (with me, unfortunately, doing most of the work outside of
+class).
+\border
+
+{\bigboldfont Project 2}
+\medskip
+
+Implement the simple calculator language (let's call it ``CalcLang'') designed in class, with that design
+documented (including the finite automaton for the lexical part of the language, the context free grammar,
+and an informal description of the language semantics) in the folder {\tt Project2} at the course web stie.
+\medskip
+
+When you are done, you will have an application consisting of several Java classes.  You must submit your
+work to me as follows:
+\medskip
+
+\In
+  Make sure that the main class---the one that contains the {\tt main} method at which execution starts---is
+  named exactly {\tt CalcLang}.
+  \medskip
+  
+  Clean up your source files for submission by removing all non-portable {\tt package} statements and
+  all extraneous output.
+  \medskip
+  
+  Put all your source files in a folder, named {\tt Project2}.
+  Create a {\tt jar} file from the command line by moving into the folder that contains the folder {\tt Project2}
+  and entering
+  \smallskip
+  {\tt jar cvfM proj2.jar Project2}
+  \medskip
+  
+  Test your work by making a temporary folder somewhere, copying {\tt proj2.jar} into it, moving into it,
+  and entering
+  \smallskip
+  {\tt jar xf  proj2.jar}
+  \smallskip
+  This should make a folder {\tt Project2} that contains all your source code.  Move into it and compile and
+  run your application.
+   \medskip
+   
+   Email me your submission with {\tt proj2.jar} attached at {\tt shultzj@msudenver.edu}
+  \bigskip
+  
+  If you are somehow incapable of doing the previous work, you may as a slightly irritating (to me) alternative
+  make a {\tt zip} file of the folder containing your source code instead of a {\tt jar} file.
+\medskip
+\Out
+
+
+
+\vfil\eject
+\bye
+

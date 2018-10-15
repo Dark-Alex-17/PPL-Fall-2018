@@ -1,0 +1,10 @@
+ShowSyms -> .
+Halt
+
+Def ShowSyms .
+
+65 -> Sym
+33 -> Sym
+97 -> Sym
+NL
+0 -> Ret

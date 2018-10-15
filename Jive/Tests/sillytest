@@ -1,0 +1,13 @@
+Keys -> x
+Keys -> y
+Keys -> z
+
+Add3 x y z -> Prt   NL
+
+Halt
+
+Def Add3 a b c .
+
+Add a b -> x
+Add x c -> x
+x -> Ret

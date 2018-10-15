@@ -1,0 +1,25 @@
+Announcements
+  (I'll try to keep this file current with any due dates, corrections to
+   the course notes, corrections to
+   Exercises and Projects, and so on)
+=======================================
+
+Exercise 2:
+
+   The command (occurring two places):
+
+       2 1001 1
+
+   is misleading, because the "1" is a conceptual error
+   (in an earlier version of VPL, I though the call had
+    to speciy how many arguments had been passed, but now
+    we just say that the command 3's have to immediately
+    precede the command 2)
+    but I didn't notice this issue because the loader
+    sees opcode 2, reads one further argument (1001), and
+    tosses the rest of the line---it's just as if the "1"
+    is a comment.
+---------------------------------------
+   
+Project 1 is due September 10 (target)
+

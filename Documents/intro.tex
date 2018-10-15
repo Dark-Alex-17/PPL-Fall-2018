@@ -1,0 +1,1945 @@
+\input pictex
+\input /Users/Shared/TeX/defs
+
+\advance \hoffset 0.25 true in
+
+\startDoc{CS 3210 Fall 2018}{1}{Introduction}
+
+{\bigboldfont Introduction to the Course}
+\medskip
+
+This course will cover four main themes:  
+techniques for specifying programming languages,
+implementation of programming languages,
+exposure to alternative programming language paradigms, and
+issues in the design of programming languages.
+\medskip
+
+{\bf Note:}  frequently in these course notes you will find this symbol: $\Rightarrow$ in the
+margin.  Wherever this occurs, we will do this work during a mini-lecture,
+recording our results either in a snapshot of the board or a text file.
+\bigskip
+
+{\bf Some Introductory Questions}
+\medskip
+
+\doit What is a programming language?
+\medskip
+
+\doit
+In the Web search for {\tt programming paradigms} and note the main four that
+we will study.
+\medskip
+
+\doit
+In the Web, search for {\tt history of programming languages} and specifically look for
+a timeline, and ponder the list, including noting the paradigm(s) some of them belong to.
+\medskip
+
+\doit Go to {\tt www.tiobe.com/tiobe-index} and observe the popularity of various
+programming languages at this moment in time.
+\border
+
+{\bigboldfont A Very Primitive Language}
+\medskip
+
+For the rest of our introduction to the course (including in-depth study of a number of important
+issues relating to designing and implementing imperative programming languages), we will
+study a toy language known as VPL (for ``very primitive language'').
+\medskip
+
+To begin, we will specify the syntax and semantics of VPL, and then
+you will have a project to implement VPL (which will turn out to be fairly easy).
+\medskip
+
+The main requirement for this language is that it be very easy to specify and implement.
+One major consequence of this requirement is that we will only work with integer values,
+and input/output operations and other utility functions that could easily be provided are
+kept to a minimum.
+\medskip
+
+This work provides a first example of specification of
+a programming language,
+begins our study of implementation of programming languages,
+will be used later as the platform for discussing all sorts of imperative language
+implementation issues, and will provide a very gentle introduction to language design
+issues.
+\medskip
+
+In a sense, all procedural
+ languages are just spiffed up versions of a language such
+as this.
+\medskip
+
+The following description of  VPL
+mostly only makes sense in the context of the implementation we 
+have in mind, so implementation suggestions will be integrated with
+the language description.  This makes sense, since we are sort of
+creating a virtual processor as we describe the language.
+
+\vfil\eject
+
+{\bf The VPL Memory Model}
+\medskip
+
+The memory model consists of a rather large one-dimensional array,
+named {\tt mem} in the following discussion, together with a number
+of individual variables, including ones named {\tt ip}, {\tt sp}, {\tt bp}, {\tt rv},
+{\tt hp}, and {\tt gp} that are referred to as {\it registers}.
+\medskip
+
+Each location in this
+array is known as a memory cell, or just cell.
+This array holds the stored program, starting in cell 0 and continuing as
+needed.  The global memory area begins where
+the stored program ends. The system stack begins where the global memory area ends.
+The area for dynamic memory, known as the ``heap,''
+begins at the upper end of the array and continues downward.
+\medskip
+
+While the program is executing, the instruction pointer register {\tt ip}
+will hold the index of the cell containing the operation code for the
+instruction that is currently executing.
+\medskip
+
+The ``global pointer'' register {\tt gp} holds the first index after the stored
+program.
+\medskip
+
+At all times the base pointer register {\tt bp} will hold the index of the
+smallest cell in the region of memory used for the currently active
+subprogram, which is known as the ``stack frame,''
+and the stack pointer register {\tt sp} will hold the index
+of the first cell above the stack frame.
+\medskip
+
+The heap pointer register {\tt hp} will point to the first cell of the
+most recently allocated chunk of memory, so that the region with
+indices smaller than {\tt hp} will be available for allocation.
+\medskip
+
+The return value register {\tt rv} is used to hold the single
+value being returned by a subprogram.
+\medskip
+
+Here is a picture of the memory layout:
+\medskip
+
+\beginpicture
+\setcoordinatesystem units <1 true cm,1true cm>
+\putrectangle corners at 0 0 and 16 1
+\put {\tinytt MEM} [b] at 16.2 1.2
+\putrule from 5 0 to 5 1
+\put {\tt code} at 2.5 0.5
+\putrule from 7 0 to 7 1
+\put {\tt globals} at 6 0.5
+\put {\tt stack} at 8.5 0.5
+\put {$\rightarrow$} at 10 0.5
+\put {$\cdots$} at 12 0.5
+\put {$\leftarrow$} at 13.5 0.5
+\put {\tt heap} at 15 0.5
+\put {\tinytt 0} at 0.2 1.2
+\put {\tinytt ip} at 3 1.2
+\put {\tinytt gp} at  5.2  1.2
+\put {\tinytt bp} at  8.5 1.2
+\put {\tinytt sp} at   9.2 1.2
+\put {\tinytt hp} at  14 1.2
+\endpicture
+
+\bigskip
+
+{\bf The Instructions and Execution Semantics}
+\medskip
+
+We will now see our first example of specifying a programming language---we will
+specify the {\it syntax}---the rules for what sequences of symbols constitute a legal
+program in VPL---and the {\it semantics}---the meaning of a VPL program.
+For this very simple language, we will be able to specify these things quite easily.
+In fact, the previous ``memory model'' discussion has begun the description of the
+semantics of VPL.
+\bigskip
+
+Execution starts with {\tt ip} set to 0.  Note that all the registers
+need to be properly initialized.
+After each instruction has executed, {\tt ip} has either been moved
+to a different value, or it moves to the sequentially next instruction.
+\medskip
+
+When input arguments are passed, a subprogram is called,
+or a subprogram is returned from, we will need to manage the
+details of the stack frame to make recursion possible.
+In particular, in addition to allocating space in a stack frame
+for the input arguments and local variables, we will need to have
+space for storing the values of any registers that need to be
+restored when you return from a subprogram.  However we do this
+we want to set things up so that all ``variables'' in a subprogram,
+including arguments and locals, will be named 0, 1, 2, and so on, with
+the input arguments being 0, 1, 2, and so on.
+\medskip
+
+We will assume that arguments are always passed immediately before
+calling a subprogram.
+\medskip
+
+Here are the draft details of the operations.
+In this description, the syntax of each instruction is given
+implicitly through an abstract example.  In the abstract
+examples, every symbol represents an integer,
+but as an aid to understanding the semantics,
+integer literals are operation codes, {\tt n} represents
+an integer literal,
+{\tt a}, {\tt b}, and {\tt c} represent offsets in the current
+stack from {\tt bp} (and ``cell a'' actually means the
+array location with index {\tt bp+2+a}),
+and
+{\tt L} represents a label.
+\medskip
+
+\halign{\tabskip 0.25true in
+{\tt #}\hfil& #\hfil& \vtop{\hsize 3.5true in \baselineskip  0.8\baselineskip #}\hfil\cr
+\noalign{\smallskip\hrule\smallskip}
+Instruction& Mnemonic& Semantic Description\cr
+\noalign{\smallskip\hrule\smallskip}
+0& no op& Do nothing.\cr
+\noalign{\medskip}
+1 L& label&  During program loading this instruction disappears, and all
+                    occurrences of {\tt L} are replaced by the actual index in {\tt mem}
+                    where the opcode {\tt 1} would have been stored.\cr
+\noalign{\medskip}
+2 L& call& Do all the steps necessary to set up for execution of the subprogram
+                    that begins at label {\tt L}.\cr
+\noalign{\medskip}
+3 a& pass& Push the contents of cell {\tt a} on the stack.\cr
+\noalign{\medskip}
+4 n& locals& Increase {\tt sp} by {\tt n} to make space for local variables in
+                     the current stack frame.\cr
+\noalign{\medskip}
+5 a& return& Do all the steps necessary to return from the current subprogram,
+                     including putting the value stored in cell {\tt a} in {\tt rv}.\cr
+\noalign{\medskip}
+6 a& get retval& Copy the value stored in {\tt rv} into cell {\tt a}.\cr         
+\noalign{\medskip}
+7 L& jump& Change {\tt ip} to {\tt L}.\cr
+\noalign{\medskip}
+8 L a& cond& If the value stored in cell {\tt a} is non-zero, change {\tt ip} to {\tt L}
+                      (otherwise, move {\tt ip} to the next instruction).\cr
+\noalign{\medskip}
+9 a b c& add& Add the values in cell {\tt b} and cell {\tt c} and store the result
+                        in cell {\tt a}.\cr
+\noalign{\medskip}
+10 a b c& subtract& Same as 9, but do cell {\tt b} $-$ cell {\tt c}.\cr                                      
+\noalign{\medskip}
+11 a b c& multiply& Same as 9, but do cell {\tt b} $*$ cell {\tt c}.\cr                                      
+\noalign{\medskip}
+12 a b c& divide& Same as 9, but do cell {\tt b} $/$ cell {\tt c}.\cr                                      
+\noalign{\medskip}
+13 a b c& remainder& Same as 9, but do cell {\tt b} \% cell {\tt c}.\cr                                      
+\noalign{\medskip}
+14 a b c& equal& Same as 9, but do cell {\tt b} {\tt ==} cell {\tt c}.\cr                                      
+\noalign{\medskip}
+15 a b c& not equal& Same as 9, but do cell {\tt b} {\tt !=} cell {\tt c}.\cr                                      
+\noalign{\medskip}
+16 a b c& less than& Same as 9, but do cell {\tt b} {\tt <} cell {\tt c}.\cr                                      
+\noalign{\medskip}
+17 a b c& less than or equal& Same as 9, but do cell {\tt b} {\tt <=} cell {\tt c}.\cr                                      
+\noalign{\medskip}
+18 a b c& and& Same as 9, but do cell {\tt b} $\&\&$ cell {\tt c}.\cr                                      
+\noalign{\medskip}
+19 a b c& or& Same as 9, but do cell {\tt b} {\tt ||} cell {\tt c}.\cr                                      
+\noalign{\medskip}
+20 a b& not& If cell {\tt b} holds zero, put 1 in cell {\tt a}, 
+                          otherwise put 0 in cell {\tt a}.\cr
+\noalign{\medskip}
+21 a b& opposite& Put the opposite of the contents of cell {\tt b} in cell {\tt a}.\cr
+\noalign{\medskip}
+22 a n& literal&  Put {\tt n} in cell {\tt a}.\cr
+\noalign{\medskip}
+23 a b& copy& Copy the value in cell {\tt b} into cell {\tt a}.\cr
+\noalign{\medskip}
+24 a b c& get&  Get the value stored in the heap at the index obtained by adding
+                          the value of cell {\tt b} and the value of cell {\tt c} and copy
+                            it into cell {\tt a}.\cr                                                      
+\noalign{\medskip}
+25 a b c& put& Take the value from cell {\tt c} and store it in the heap at the
+                          location with index computed as the value in cell {\tt a} plus
+                          the value in cell {\tt b}.\cr
+\noalign{\medskip}
+26& halt& Halt execution.\cr
+\noalign{\medskip}
+27 a& input& Print a {\tt ?} and a space in the console and wait for an
+                             integer value to be typed by the user, and then store it in cell 
+                             {\tt a}.\cr
+\noalign{\medskip}
+28 a& output& Display the value stored in cell {\tt a} in the console.\cr
+\noalign{\medskip}
+29& newline& Move the console cursor to the beginning of the next line\cr
+\noalign{\medskip}
+30 a& symbol&  If the value stored in cell {\tt a} is between 32 and 126, display
+                          the corresponding symbol at the console cursor, otherwise
+                          do nothing.\cr
+\noalign{\medskip}
+ 31 a b& new& Let the value stored in cell {\tt b} be denoted by $m$.
+                         Decrease {\tt hp} by $m$ and put the new value of {\tt hp}
+                         in cell {\tt a}.\cr
+\noalign{\medskip}
+32 n&  allocate global space&  This instruction must occur first in any program that
+uses it.  It simply sets the initial value of {\tt sp} to {\tt n} cells beyond the end of stored
+program memory, and sets {\tt gp} to the end of stored program memory.\cr
+\noalign{\medskip}
+33 n a& Copy to global& Copy the contents of cell {\tt a} to the global memory area at index {\tt gp+n}.\cr
+\noalign{\medskip}
+34 a n&  Copy from global& Copy the contents of the global memory cell at index {\tt gp+n} into cell {\tt a}.\cr                  
+\noalign{\smallskip\hrule\smallskip}
+}
+\medskip
+
+The C strategy of ``non-zero is true, zero is false'' is used where appropriate.
+C style psuedo-code is used to describe the various operations 9--19.
+\medskip
+\hrule
+\bigskip
+
+\vfil\eject
+
+{\bf Exercise 1}
+\medskip
+
+Working in whiteboard groups (ideally 4 or 5 people), write the following simple programs in VPL.
+\medskip
+
+\item{a.}  Create a single global variable and store 17 in it.
+Display a question mark in the console, get input from the keyboard, and store it in a local cell.
+Add that input value to the global variable value and display the result in the console.
+\medskip
+
+\item{b.}  Create a VPL program that asks the user for an input value and
+displays 1 if that input is an odd number, and 2 if it is an even number.
+\medskip
+
+\item{c.}  Create a VPL program that asks the user for a value of {\tt number} and then
+displays on-screen (in the console) the values 1, 2, $\ldots$, {\tt number}, one per line.
+\medskip
+
+\item{d.}  Create a VPL program that gets an input value, say $x$, and repeatedly
+divides $x$ by 2 if $x$ is even or multiplies $x$ by 3 and adds 1, until $x$ reaches $1$.
+\border
+
+{\bf The Stack Frame Model}
+\medskip
+
+In order to implement subprograms in the usual way (later we will discuss
+simpler memory models) we need to give each subprogram call its own memory area,
+known as a {\it stack frame} (or ``activation record'').
+\medskip
+
+Here is a picture of the layout of a {\it stack frame} the way we will do it
+in VPL.  This layout, combined with commands 2--6,
+allows the VPL programmer to use {\it modularity}---to be able to use subprograms.
+\bigskip
+
+\beginpicture
+\setcoordinatesystem units <1.25 true cm,1true cm>
+\putrule from 0 0 to 11 0
+\putrule from 0 1 to 11 1
+\putrule from 1 0 to 1 1
+\putrule from 2 -0.5 to 2 1.5  \put {\tinytt bp} [b] at 2.5 1.2
+\putrule from 3 0 to 3 1  \put {\tinytt return} at 2.5 0.66  \put {\tinytt ip} at 2.5 0.33
+\putrule from 4 0 to 4 1  \put {\tinytt return} at 3.5 0.66  \put {\tinytt bp} at 3.5 0.33
+\putrule from 5 0 to 5 1  \put {\tinytt 0} [t] at 4.5 -0.2
+\putrule from 6 0 to 6 1  \put {\tinytt 1} [t] at 5.5 -0.2
+\putrule from 7 0 to 7 1  \put {\tinytt 2} [t] at 6.5 -0.2
+\put {$\cdots$} at 8 0.5
+   \put {\tinytt sp} [b] at 9.5 1.2
+\putrule from 10 0 to 10 1
+\linethickness 2true pt
+\putrule from 2 -0.5 to 2 1.5 
+\putrule from 9 -0.5 to 9 1.5 \endpicture
+\bigskip
+
+With this model, a {\it stack frame\/} consists of all the memory cells from index {\tt bp} up to
+but not including index {\tt sp}.
+\medskip
+
+To call a subprogram, first we have to use command 3 once for each value that we want to
+pass over to the next stack frame.
+Then we use command 2 to call the desired subprogram.
+This command stores the correct values of the current base pointer and instruction pointer in the
+first two cells of the new stack frame.
+Note that the arguments passed by command 3 sit just to the right of those two cells.
+\medskip
+
+And, command 2 has to change the instruction pointer to the starting point in the code segment
+of the subprogram being called.
+\medskip
+
+The first command in the subprogram must be command 4, which simply moves the stack pointer
+to the right to make space for the local variables in the stack frame.
+So, if for example we passed two arguments, then the cells conceptually labeled (underneath) 0 and
+1 will hold the values of those parameters (to use Java terminology), while cells conceptually
+labeled 2, 3, and so on, will be local variables for the subprogram.
+\medskip
+
+When command 5 executes, it puts the value to be returned in the return value register, and
+then restores the base pointer, the stack pointer, and the instruction pointer, thus returning both in
+code and in the stack to the stack frame from which the call was made.
+\medskip
+
+Then in the calling stack frame, command 6 moves the returned value into a local cell.
+\border
+
+{\bf Exercise 2}
+\medskip
+
+Here is a VPL program (a very bad one in the sense that it has no comments!):
+\medskip
+
+\verbatim
+4 3
+27 0
+3 0
+2 1001 
+6 1
+28 1
+29 
+26
+
+1 1001
+4 6
+22 2 2 
+22 1 1
+16 6 0 2
+8 2001 6
+10 3 0 1
+3 3
+2 1001
+6 4
+11 5 0 4
+5 5
+1 2001
+5 1
+|endverbatim
+\medskip
+\bigskip
+
+Trace the execution of this program.
+Your group will need to draw a bunch of memory cells.
+Since you have a narrow piece of whiteboard, break the long strip of
+cells into convenient horizontal pieces, say using 10 cells per piece.
+\medskip
+
+As you write the numbers for the code in the code section, be sure to
+remove the label commands and to change all the ``jump'' commands to
+use the index where the label command would be.
+\medskip
+
+As you trace the commands, keep track of the {\tt ip}, {\tt bp}, and {\tt sp}
+by writing them in above the correct memory cells and erasing the previous
+values.
+\medskip
+
+And, of course, trace what is written in the console.
+\vfil\eject
+
+{\bf Wrap-Up Exercise 1}
+\medskip
+
+My solutions to Exercise 1 are in the VPL folder.
+Make sure that you finish Exercise 1 on your own time,
+as needed, with these to help.
+\medskip
+
+Also, use these programs as some of your test cases for Project 1.
+\border
+
+{\bf Exercise 3}
+\medskip
+
+Working in whiteboard groups (ideally 4 or 5 people), 
+write this program, which includes two useful subprograms:
+\medskip
+
+\Indent{.5}
+Write a subprogram, starting with label 100000,
+ that takes as its single input argument a positive integer $n$, and then
+ allocates $n+1$ cells in the heap, stores $n$ in the first of these
+ cells, and then asks the user for $n$ numbers, storing them in the remaining $n$ cells,
+ and returns the address in memory where the list begins.
+ \medskip
+ 
+ Write a subprogram, starting with label 200000,
+ that takes as its single input argument the index in memory of the
+ starting point of a list, stored as for subprogram 100000,
+ and then displays the list on a single line, with items separated by spaces.
+ \medskip
+
+Then write a main program that will call the list input subprogram and then call the
+list display subprogram.
+\medskip
+
+Someone in your group should record your final work in a computer file and email it
+to everyone in the group, because you will want to use this program as a test case
+for your Project 1 work.
+\border
+\Outdent
+
+\vfil\eject
+
+{\bf Exercise 4}  
+\medskip
+
+Trace the execution of the code shown below.  
+Draw on the whiteboard memory cells from 70 on, and trace
+all the operations, assuming the user inputs 4 and then 2.
+\medskip
+
+\beginpicture
+\setcoordinatesystem units <0.4true in, 0.3true in>
+\putrectangle corners at 0.0 15.75 and 1.0 16.75
+\put {$\scriptstyle 27$} at 0.5 16.25
+\put {$\scriptstyle 0$} [b] at 0.5 16.83
+\put {\tt ip} [b] at 0.5 17.15
+\putrectangle corners at 1.0 15.75 and 2.0 16.75
+\put {$\scriptstyle 0$} at 1.5 16.25
+\put {$\scriptstyle 1$} [b] at 1.5 16.83
+\putrectangle corners at 2.0 15.75 and 3.0 16.75
+\put {$\scriptstyle 27$} at 2.5 16.25
+\put {$\scriptstyle 2$} [b] at 2.5 16.83
+\putrectangle corners at 3.0 15.75 and 4.0 16.75
+\put {$\scriptstyle 1$} at 3.5 16.25
+\put {$\scriptstyle 3$} [b] at 3.5 16.83
+\putrectangle corners at 4.0 15.75 and 5.0 16.75
+\put {$\scriptstyle 3$} at 4.5 16.25
+\put {$\scriptstyle 4$} [b] at 4.5 16.83
+\putrectangle corners at 5.0 15.75 and 6.0 16.75
+\put {$\scriptstyle 0$} at 5.5 16.25
+\put {$\scriptstyle 5$} [b] at 5.5 16.83
+\putrectangle corners at 6.0 15.75 and 7.0 16.75
+\put {$\scriptstyle 3$} at 6.5 16.25
+\put {$\scriptstyle 6$} [b] at 6.5 16.83
+\putrectangle corners at 7.0 15.75 and 8.0 16.75
+\put {$\scriptstyle 1$} at 7.5 16.25
+\put {$\scriptstyle 7$} [b] at 7.5 16.83
+\putrectangle corners at 8.0 15.75 and 9.0 16.75
+\put {$\scriptstyle 2$} at 8.5 16.25
+\put {$\scriptstyle 8$} [b] at 8.5 16.83
+\putrectangle corners at 9.0 15.75 and 10.0 16.75
+\put {$\scriptstyle 16$} at 9.5 16.25
+\put {$\scriptstyle 9$} [b] at 9.5 16.83
+\putrectangle corners at 0.0 13.5 and 1.0 14.5
+\put {$\scriptstyle 6$} at 0.5 14.0
+\put {$\scriptstyle 10$} [b] at 0.5 14.58
+\putrectangle corners at 1.0 13.5 and 2.0 14.5
+\put {$\scriptstyle 2$} at 1.5 14.0
+\put {$\scriptstyle 11$} [b] at 1.5 14.58
+\putrectangle corners at 2.0 13.5 and 3.0 14.5
+\put {$\scriptstyle 28$} at 2.5 14.0
+\put {$\scriptstyle 12$} [b] at 2.5 14.58
+\putrectangle corners at 3.0 13.5 and 4.0 14.5
+\put {$\scriptstyle 2$} at 3.5 14.0
+\put {$\scriptstyle 13$} [b] at 3.5 14.58
+\putrectangle corners at 4.0 13.5 and 5.0 14.5
+\put {$\scriptstyle 29$} at 4.5 14.0
+\put {$\scriptstyle 14$} [b] at 4.5 14.58
+\putrectangle corners at 5.0 13.5 and 6.0 14.5
+\put {$\scriptstyle 26$} at 5.5 14.0
+\put {$\scriptstyle 15$} [b] at 5.5 14.58
+\putrectangle corners at 6.0 13.5 and 7.0 14.5
+\put {$\scriptstyle 4$} at 6.5 14.0
+\put {$\scriptstyle 16$} [b] at 6.5 14.58
+\putrectangle corners at 7.0 13.5 and 8.0 14.5
+\put {$\scriptstyle 5$} at 7.5 14.0
+\put {$\scriptstyle 17$} [b] at 7.5 14.58
+\putrectangle corners at 8.0 13.5 and 9.0 14.5
+\put {$\scriptstyle 22$} at 8.5 14.0
+\put {$\scriptstyle 18$} [b] at 8.5 14.58
+\putrectangle corners at 9.0 13.5 and 10.0 14.5
+\put {$\scriptstyle 2$} at 9.5 14.0
+\put {$\scriptstyle 19$} [b] at 9.5 14.58
+\putrectangle corners at 0.0 11.25 and 1.0 12.25
+\put {$\scriptstyle 1$} at 0.5 11.75
+\put {$\scriptstyle 20$} [b] at 0.5 12.33
+\putrectangle corners at 1.0 11.25 and 2.0 12.25
+\put {$\scriptstyle 22$} at 1.5 11.75
+\put {$\scriptstyle 21$} [b] at 1.5 12.33
+\putrectangle corners at 2.0 11.25 and 3.0 12.25
+\put {$\scriptstyle 5$} at 2.5 11.75
+\put {$\scriptstyle 22$} [b] at 2.5 12.33
+\putrectangle corners at 3.0 11.25 and 4.0 12.25
+\put {$\scriptstyle 0$} at 3.5 11.75
+\put {$\scriptstyle 23$} [b] at 3.5 12.33
+\putrectangle corners at 4.0 11.25 and 5.0 12.25
+\put {$\scriptstyle 14$} at 4.5 11.75
+\put {$\scriptstyle 24$} [b] at 4.5 12.33
+\putrectangle corners at 5.0 11.25 and 6.0 12.25
+\put {$\scriptstyle 6$} at 5.5 11.75
+\put {$\scriptstyle 25$} [b] at 5.5 12.33
+\putrectangle corners at 6.0 11.25 and 7.0 12.25
+\put {$\scriptstyle 1$} at 6.5 11.75
+\put {$\scriptstyle 26$} [b] at 6.5 12.33
+\putrectangle corners at 7.0 11.25 and 8.0 12.25
+\put {$\scriptstyle 5$} at 7.5 11.75
+\put {$\scriptstyle 27$} [b] at 7.5 12.33
+\putrectangle corners at 8.0 11.25 and 9.0 12.25
+\put {$\scriptstyle 8$} at 8.5 11.75
+\put {$\scriptstyle 28$} [b] at 8.5 12.33
+\putrectangle corners at 9.0 11.25 and 10.0 12.25
+\put {$\scriptstyle 68$} at 9.5 11.75
+\put {$\scriptstyle 29$} [b] at 9.5 12.33
+\putrectangle corners at 0.0 9.0 and 1.0 10.0
+\put {$\scriptstyle 6$} at 0.5 9.5
+\put {$\scriptstyle 30$} [b] at 0.5 10.08
+\putrectangle corners at 1.0 9.0 and 2.0 10.0
+\put {$\scriptstyle 14$} at 1.5 9.5
+\put {$\scriptstyle 31$} [b] at 1.5 10.08
+\putrectangle corners at 2.0 9.0 and 3.0 10.0
+\put {$\scriptstyle 6$} at 2.5 9.5
+\put {$\scriptstyle 32$} [b] at 2.5 10.08
+\putrectangle corners at 3.0 9.0 and 4.0 10.0
+\put {$\scriptstyle 1$} at 3.5 9.5
+\put {$\scriptstyle 33$} [b] at 3.5 10.08
+\putrectangle corners at 4.0 9.0 and 5.0 10.0
+\put {$\scriptstyle 0$} at 4.5 9.5
+\put {$\scriptstyle 34$} [b] at 4.5 10.08
+\putrectangle corners at 5.0 9.0 and 6.0 10.0
+\put {$\scriptstyle 8$} at 5.5 9.5
+\put {$\scriptstyle 35$} [b] at 5.5 10.08
+\putrectangle corners at 6.0 9.0 and 7.0 10.0
+\put {$\scriptstyle 68$} at 6.5 9.5
+\put {$\scriptstyle 36$} [b] at 6.5 10.08
+\putrectangle corners at 7.0 9.0 and 8.0 10.0
+\put {$\scriptstyle 6$} at 7.5 9.5
+\put {$\scriptstyle 37$} [b] at 7.5 10.08
+\putrectangle corners at 8.0 9.0 and 9.0 10.0
+\put {$\scriptstyle 10$} at 8.5 9.5
+\put {$\scriptstyle 38$} [b] at 8.5 10.08
+\putrectangle corners at 9.0 9.0 and 10.0 10.0
+\put {$\scriptstyle 3$} at 9.5 9.5
+\put {$\scriptstyle 39$} [b] at 9.5 10.08
+\putrectangle corners at 0.0 6.75 and 1.0 7.75
+\put {$\scriptstyle 0$} at 0.5 7.25
+\put {$\scriptstyle 40$} [b] at 0.5 7.83
+\putrectangle corners at 1.0 6.75 and 2.0 7.75
+\put {$\scriptstyle 2$} at 1.5 7.25
+\put {$\scriptstyle 41$} [b] at 1.5 7.83
+\putrectangle corners at 2.0 6.75 and 3.0 7.75
+\put {$\scriptstyle 10$} at 2.5 7.25
+\put {$\scriptstyle 42$} [b] at 2.5 7.83
+\putrectangle corners at 3.0 6.75 and 4.0 7.75
+\put {$\scriptstyle 4$} at 3.5 7.25
+\put {$\scriptstyle 43$} [b] at 3.5 7.83
+\putrectangle corners at 4.0 6.75 and 5.0 7.75
+\put {$\scriptstyle 1$} at 4.5 7.25
+\put {$\scriptstyle 44$} [b] at 4.5 7.83
+\putrectangle corners at 5.0 6.75 and 6.0 7.75
+\put {$\scriptstyle 2$} at 5.5 7.25
+\put {$\scriptstyle 45$} [b] at 5.5 7.83
+\putrectangle corners at 6.0 6.75 and 7.0 7.75
+\put {$\scriptstyle 3$} at 6.5 7.25
+\put {$\scriptstyle 46$} [b] at 6.5 7.83
+\putrectangle corners at 7.0 6.75 and 8.0 7.75
+\put {$\scriptstyle 3$} at 7.5 7.25
+\put {$\scriptstyle 47$} [b] at 7.5 7.83
+\putrectangle corners at 8.0 6.75 and 9.0 7.75
+\put {$\scriptstyle 3$} at 8.5 7.25
+\put {$\scriptstyle 48$} [b] at 8.5 7.83
+\putrectangle corners at 9.0 6.75 and 10.0 7.75
+\put {$\scriptstyle 4$} at 9.5 7.25
+\put {$\scriptstyle 49$} [b] at 9.5 7.83
+\putrectangle corners at 0.0 4.5 and 1.0 5.5
+\put {$\scriptstyle 2$} at 0.5 5.0
+\put {$\scriptstyle 50$} [b] at 0.5 5.58
+\putrectangle corners at 1.0 4.5 and 2.0 5.5
+\put {$\scriptstyle 16$} at 1.5 5.0
+\put {$\scriptstyle 51$} [b] at 1.5 5.58
+\putrectangle corners at 2.0 4.5 and 3.0 5.5
+\put {$\scriptstyle 6$} at 2.5 5.0
+\put {$\scriptstyle 52$} [b] at 2.5 5.58
+\putrectangle corners at 3.0 4.5 and 4.0 5.5
+\put {$\scriptstyle 6$} at 3.5 5.0
+\put {$\scriptstyle 53$} [b] at 3.5 5.58
+\putrectangle corners at 4.0 4.5 and 5.0 5.5
+\put {$\scriptstyle 3$} at 4.5 5.0
+\put {$\scriptstyle 54$} [b] at 4.5 5.58
+\putrectangle corners at 5.0 4.5 and 6.0 5.5
+\put {$\scriptstyle 3$} at 5.5 5.0
+\put {$\scriptstyle 55$} [b] at 5.5 5.58
+\putrectangle corners at 6.0 4.5 and 7.0 5.5
+\put {$\scriptstyle 3$} at 6.5 5.0
+\put {$\scriptstyle 56$} [b] at 6.5 5.58
+\putrectangle corners at 7.0 4.5 and 8.0 5.5
+\put {$\scriptstyle 1$} at 7.5 5.0
+\put {$\scriptstyle 57$} [b] at 7.5 5.58
+\putrectangle corners at 8.0 4.5 and 9.0 5.5
+\put {$\scriptstyle 2$} at 8.5 5.0
+\put {$\scriptstyle 58$} [b] at 8.5 5.58
+\putrectangle corners at 9.0 4.5 and 10.0 5.5
+\put {$\scriptstyle 16$} at 9.5 5.0
+\put {$\scriptstyle 59$} [b] at 9.5 5.58
+\putrectangle corners at 0.0 2.25 and 1.0 3.25
+\put {$\scriptstyle 6$} at 0.5 2.75
+\put {$\scriptstyle 60$} [b] at 0.5 3.33
+\putrectangle corners at 1.0 2.25 and 2.0 3.25
+\put {$\scriptstyle 7$} at 1.5 2.75
+\put {$\scriptstyle 61$} [b] at 1.5 3.33
+\putrectangle corners at 2.0 2.25 and 3.0 3.25
+\put {$\scriptstyle 9$} at 2.5 2.75
+\put {$\scriptstyle 62$} [b] at 2.5 3.33
+\putrectangle corners at 3.0 2.25 and 4.0 3.25
+\put {$\scriptstyle 6$} at 3.5 2.75
+\put {$\scriptstyle 63$} [b] at 3.5 3.33
+\putrectangle corners at 4.0 2.25 and 5.0 3.25
+\put {$\scriptstyle 6$} at 4.5 2.75
+\put {$\scriptstyle 64$} [b] at 4.5 3.33
+\putrectangle corners at 5.0 2.25 and 6.0 3.25
+\put {$\scriptstyle 7$} at 5.5 2.75
+\put {$\scriptstyle 65$} [b] at 5.5 3.33
+\putrectangle corners at 6.0 2.25 and 7.0 3.25
+\put {$\scriptstyle 5$} at 6.5 2.75
+\put {$\scriptstyle 66$} [b] at 6.5 3.33
+\putrectangle corners at 7.0 2.25 and 8.0 3.25
+\put {$\scriptstyle 6$} at 7.5 2.75
+\put {$\scriptstyle 67$} [b] at 7.5 3.33
+\putrectangle corners at 8.0 2.25 and 9.0 3.25
+\put {$\scriptstyle 5$} at 8.5 2.75
+\put {$\scriptstyle 68$} [b] at 8.5 3.33
+\putrectangle corners at 9.0 2.25 and 10.0 3.25
+\put {$\scriptstyle 2$} at 9.5 2.75
+\put {$\scriptstyle 69$} [b] at 9.5 3.33
+\endpicture
+\border
+
+\vfil\eject
+
+{\bigboldfont Project 1} [first serious submission due by Monday, September 10]
+\medskip
+
+Implement VPL by starting from the given file {\tt VPL.java} found in the {\tt VPL} folder at the course web site
+ (supported by the little class {\tt IntPair.java}),
+which (along with some other useful stuff) does the irritating task of replacing
+symbolic labels by memory indices.
+\medskip
+
+To begin, download {\tt VPL.java}  and {\tt IntPair.java} to your working folder.
+\medskip
+
+The given code assumes you are calling it from the command line.  If you aren't, you'll need to
+change the code in obvious ways.
+\medskip
+
+Put in code to implement all the operations.  The
+Be sure to test your program thoroughly. 
+ At a minimum, run it on all the programs given in the {\tt VPL} folder,
+ plus your program from Exercise 3.  The file {\tt someUnitTests}
+ does a sequence of simple tests of some commands, and you should be able to easily
+ determine the output it should produce to compare to what your program actually does produce.
+ If you submit your work when it is not working as desired on these VPL programs,
+ you should also explain which ones have problems and describe what you are planning to
+ do next to fix your program.
+ \medskip
+
+As you're working on this project, remember that this work will directly help you to
+prepare for Test 1, 
+which will ask you to read, write, and execute VPL code, as well as to
+add new features to the VPL language.
+\medskip
+
+When you are ready to submit your work (and recall that a serious first submission must be done by the due date or
+you will never be allowed to submit it)
+email\hfil\break
+ {\tt shultzj@msudenver.edu} with your file {\tt VPL.java} as an attachment.
+And, yes, you must do this program in Java, purely for my and your convenience.  If there is
+any feature of the program that you find difficult to do in Java, then you are probably
+doing things wrong!  In other words, implementing a language this primitive should only
+require very primitive features of Java.
+\border
+
+\vfil\eject
+
+%  mini-lecture --- introduce idea of higher level language that will translate to VPL
+
+{\bf An Assembler for VPL?}
+\medskip
+
+\doit Let's discuss for a while what is so horribly wrong with VPL (even assuming we only want to
+be able to work with integer values).
+\medskip
+
+Your next Project, following some background work and Exercises to get ready, will be to implement, in Java, a
+translator that will take a program written in a language that is nicer to use than VPL and
+translate it to a VPL program.
+\medskip
+
+To keep things from getting out of hand at this point, we will make the following crucial language design
+decision:
+\medskip
+
+{\advance \leftskip .5true in
+   \it The new language should translate line-by-line to a VPL program, where each line of the
+   new language can be translated to some VPL code as we go.
+\border
+}
+
+{\bf Exercise 5} 
+\medskip
+
+Working in groups, ideally of size four or five, {\it design\/} this new language.
+After you work on this a while, we will have a whole group discussion and come up with
+the draft (we might decide something which turns out later to be bad) design for our
+joint language.
+\medskip
+
+Note that part of the design is the {\it name\/} of the language.
+\border
+
+{\bigboldfont The First Step in Language Implementation:  Lexical Analysis}
+\bigskip
+
+Because the new language is simple enough, the only interesting issue in its implementation
+will be turning sequences of physical symbols---actual single symbols---into conceptual symbols known as
+{\it tokens\/} or {\it lexemes}.
+\medskip
+
+To do this, we will first study some ides in what is known as {\it lexical analysis}.
+\border
+
+{\bf Finite Automata}
+\medskip
+
+ A {\it finite automaton} (FA) consists of a directed graph, where the vertices
+are known as {\it states\/}
+and are typically drawn as circles, and each edge of the graph is labeled with a list of one or more
+symbols belonging to the alphabet.  
+Each symbol in the alphabet can only occur on at most one edge leading out of any state.
+One state is marked by an arrow out of nowhere pointing to it as the {\it start state}, and one or
+more states are marked, typically by ``double circling,'' as {\it accepting states}.
+\medskip
+
+For example, here is an FA using the alphabet $\{ a, b\}$:
+\medskip
+
+$$
+\beginpicture
+\setcoordinatesystem units <1true pt,1true pt>
+% epsilon
+    \circulararc 360 degrees from 9.0 80.0 center at 0.0 80.0
+    \put {1} at 0.0 80.0
+% b
+    \circulararc 360 degrees from 89.0 80.0 center at 80.0 80.0
+    \put {2} at 80.0 80.0
+% bb
+    \circulararc 360 degrees from 169.0 80.0 center at 160.0 80.0
+    \put {3} at 160.0 80.0
+    \circulararc 360 degrees from 168.0 80.0 center at 160.0 80.0
+% ba
+    \circulararc 360 degrees from 89.0 0.0 center at 80.0 0.0
+    \put {4} at 80.0 0.0
+    \circulararc 360 degrees from 88.0 0.0 center at 80.0 0.0
+% Arrow from epsilon to b:
+    \arrow <0.1in> [0.2,0.67] from 9.0 80.0 to 71.0 80.0
+    \put {b} at 40.0 86.0
+% Arrow from b to bb:
+    \arrow <0.1in> [0.2,0.67] from 89.0 80.0 to 151.0 80.0
+    \put {b} at 120.0 86.0
+% Arrow from ba to epsilon:
+    \arrow <0.1in> [0.2,0.67] from 73.0 6.0 to 6.0 73.0
+    \put {a} at 40.0 34.0
+% Arrow from bb to ba:
+    \arrow <0.1in> [0.2,0.67] from 153.0 73.0 to 86.0 6.0
+    \put {a} at 120.0 34.0
+% Arrow from b to ba:
+    \arrow <0.1in> [0.2,0.67] from 75.0 71.0 to 75.0 9.0
+    \put {a} at 69.0 40.0
+% Arrow from ba to b:
+    \arrow <0.1in> [0.2,0.67] from 85.0 9.0 to 85.0 71.0
+    \put {b} at 91.0 40.0
+% Loop about epsilon:
+    \circulararc 298.0 degrees  from 3.0 88.0 center at 0.0 93.0
+    \put {a} at 0.0 105.0
+% Loop about bb:
+    \circulararc 298.0 degrees  from 163.0 88.0 center at 160.0 93.0
+    \put {b} at 160.0 105.0
+% start arrow:
+\arrow <0.1in> [0.2,0.67] from -29 80 to -9 80
+\endpicture
+$$
+\bigskip
+
+Here is how an FA is used to decide whether a given string is legal:
+\medskip
+\In
+starting from the start state, process each symbol of the input string in turn, until
+you reach the end of the string, or detect an error.  To process a symbol, look at the
+edges leading out of the current state.  If the symbol is listed on one of them, follow that
+edge to the state on the other end and make that the current state.  If the symbol is not
+listed on any edge, then the string is rejected.  Finally, if all the symbols of the
+input string are successfully processed, then check the state that you end up in---if it
+is an accepting state, then the input string is accepted as legal, otherwise it is rejected.
+\bigskip
+\Out
+
+For example, in the FA given above, the string {\tt ababbba} is accepted, moving from
+1 to 1 to 2 to 4 to 2 to 3 to 3 to 4, and state 4 is an accepting state.  On the other hand,
+the string {\tt bbbab} is not accepted, because it moves from 1 to 2 to 3 to 3 to 4 to 2,
+and state 2 is not an accepting state.  And, the string {\tt abc} is rejected because it moves
+from 1 to 1 to 2 and then detects no edge out of state 2 that processes a {\tt c}.
+\bigskip
+
+\doit Create an FA for the language of legal identifiers in our new language.
+\border
+
+{\bf Exercise 6}
+\medskip
+
+Working in your small group, create an FA for the language of integer literals.
+\medskip
+
+Then look at the new language design and see all the different kinds of tokens.
+Make sure that you can create an FA for each kind of token.
+\border
+
+\vfil\eject
+
+{\bigboldfont Announcement}
+\medskip
+
+The Learning Assistants (Peter and Jimmy) have settled on {\bf Office Hours} from
+2--3:50 on Tuesday and Thursday, in AES 237 (check the board if they aren't there to see if
+they moved to another room for more quiet).
+Barring emergencies, one or the other of them will be available during these times
+to talk with you about the
+course material, Exercises, and Projects.
+\medskip
+
+They provide another resource, which is
+ not at all to say that I won't be happy to talk with you.
+\border
+
+{\bf Practice Problems for Test 1}
+\medskip
+
+Test 1 will cover, among other things,
+our VPL-based introduction to the study of programming languages.
+You should be able to execute given VPL code by hand, write short chunks of VPL code to
+do certain things, and write Java code to add commands to the language.
+\medskip
+
+The practice problems below are not intended to cover all issues.  For example, any
+translation of Java-like code to VPL is ``fair game.''
+\border
+
+\item{$\bullet$}
+Here is a fairly simple VPL program, shown (with no documentation and labels
+replaced by actual array indices) after the code has loaded.  Trace execution of the program,
+beginning with {\tt ip} at 0,
+writing in the correct values in all the memory cells until the program halts.
+When a value is replaced by another value, draw a line through the first value and write
+the second value in the cell.  You will need to track the values of the registers yourself,
+but you do not need to show them formally.
+\medskip
+
+You should draw boundaries between the code segment, global
+segment, and stack segment, and between the various stack frames.
+\medskip
+
+Also, show what will be displayed on screen.
+
+\vfil\eject
+
+\vbox{
+\beginpicture
+\setcoordinatesystem units <0.4true in, 0.35true in>
+\putrectangle corners at 0.0 11.25 and 1.0 12.25
+\put {$32$} at 0.5 11.75
+\put {$0$} [b] at 0.5 12.33
+\put {\tt ip} [b] at 0.5 12.65
+\putrectangle corners at 1.0 11.25 and 2.0 12.25
+\put {$1$} at 1.5 11.75
+\put {$1$} [b] at 1.5 12.33
+\putrectangle corners at 2.0 11.25 and 3.0 12.25
+\put {$4$} at 2.5 11.75
+\put {$2$} [b] at 2.5 12.33
+\putrectangle corners at 3.0 11.25 and 4.0 12.25
+\put {$3$} at 3.5 11.75
+\put {$3$} [b] at 3.5 12.33
+\putrectangle corners at 4.0 11.25 and 5.0 12.25
+\put {$22$} at 4.5 11.75
+\put {$4$} [b] at 4.5 12.33
+\putrectangle corners at 5.0 11.25 and 6.0 12.25
+\put {$0$} at 5.5 11.75
+\put {$5$} [b] at 5.5 12.33
+\putrectangle corners at 6.0 11.25 and 7.0 12.25
+\put {$17$} at 6.5 11.75
+\put {$6$} [b] at 6.5 12.33
+\putrectangle corners at 7.0 11.25 and 8.0 12.25
+\put {$22$} at 7.5 11.75
+\put {$7$} [b] at 7.5 12.33
+\putrectangle corners at 8.0 11.25 and 9.0 12.25
+\put {$1$} at 8.5 11.75
+\put {$8$} [b] at 8.5 12.33
+\putrectangle corners at 9.0 11.25 and 10.0 12.25
+\put {$3$} at 9.5 11.75
+\put {$9$} [b] at 9.5 12.33
+\putrectangle corners at 0.0 9.0 and 1.0 10.0
+\put {$3$} at 0.5 9.5
+\put {$10$} [b] at 0.5 10.08
+\putrectangle corners at 1.0 9.0 and 2.0 10.0
+\put {$1$} at 1.5 9.5
+\put {$11$} [b] at 1.5 10.08
+\putrectangle corners at 2.0 9.0 and 3.0 10.0
+\put {$3$} at 2.5 9.5
+\put {$12$} [b] at 2.5 10.08
+\putrectangle corners at 3.0 9.0 and 4.0 10.0
+\put {$0$} at 3.5 9.5
+\put {$13$} [b] at 3.5 10.08
+\putrectangle corners at 4.0 9.0 and 5.0 10.0
+\put {$2$} at 4.5 9.5
+\put {$14$} [b] at 4.5 10.08
+\putrectangle corners at 5.0 9.0 and 6.0 10.0
+\put {$24$} at 5.5 9.5
+\put {$15$} [b] at 5.5 10.08
+\putrectangle corners at 6.0 9.0 and 7.0 10.0
+\put {$6$} at 6.5 9.5
+\put {$16$} [b] at 6.5 10.08
+\putrectangle corners at 7.0 9.0 and 8.0 10.0
+\put {$2$} at 7.5 9.5
+\put {$17$} [b] at 7.5 10.08
+\putrectangle corners at 8.0 9.0 and 9.0 10.0
+\put {$28$} at 8.5 9.5
+\put {$18$} [b] at 8.5 10.08
+\putrectangle corners at 9.0 9.0 and 10.0 10.0
+\put {$2$} at 9.5 9.5
+\put {$19$} [b] at 9.5 10.08
+\putrectangle corners at 0.0 6.75 and 1.0 7.75
+\put {$33$} at 0.5 7.25
+\put {$20$} [b] at 0.5 7.83
+\putrectangle corners at 1.0 6.75 and 2.0 7.75
+\put {$0$} at 1.5 7.25
+\put {$21$} [b] at 1.5 7.83
+\putrectangle corners at 2.0 6.75 and 3.0 7.75
+\put {$2$} at 2.5 7.25
+\put {$22$} [b] at 2.5 7.83
+\putrectangle corners at 3.0 6.75 and 4.0 7.75
+\put {$26$} at 3.5 7.25
+\put {$23$} [b] at 3.5 7.83
+\putrectangle corners at 4.0 6.75 and 5.0 7.75
+\put {$4$} at 4.5 7.25
+\put {$24$} [b] at 4.5 7.83
+\putrectangle corners at 5.0 6.75 and 6.0 7.75
+\put {$1$} at 5.5 7.25
+\put {$25$} [b] at 5.5 7.83
+\putrectangle corners at 6.0 6.75 and 7.0 7.75
+\put {$9$} at 6.5 7.25
+\put {$26$} [b] at 6.5 7.83
+\putrectangle corners at 7.0 6.75 and 8.0 7.75
+\put {$2$} at 7.5 7.25
+\put {$27$} [b] at 7.5 7.83
+\putrectangle corners at 8.0 6.75 and 9.0 7.75
+\put {$0$} at 8.5 7.25
+\put {$28$} [b] at 8.5 7.83
+\putrectangle corners at 9.0 6.75 and 10.0 7.75
+\put {$1$} at 9.5 7.25
+\put {$29$} [b] at 9.5 7.83
+\putrectangle corners at 0.0 4.5 and 1.0 5.5
+\put {$5$} at 0.5 5.0
+\put {$30$} [b] at 0.5 5.58
+\putrectangle corners at 1.0 4.5 and 2.0 5.5
+\put {$2$} at 1.5 5.0
+\put {$31$} [b] at 1.5 5.58
+\putrectangle corners at 2.0 4.5 and 3.0 5.5
+%\put {$0$} at 2.5 5.0
+\put {$32$} [b] at 2.5 5.58
+%\put {\tt bp} [b] at 2.5 5.9
+\putrectangle corners at 3.0 4.5 and 4.0 5.5
+%\put {$0$} at 3.5 5.0
+\put {$33$} [b] at 3.5 5.58
+\putrectangle corners at 4.0 4.5 and 5.0 5.5
+\put {$34$} [b] at 4.5 5.58
+%\put {\tt sp} [b] at 4.5 5.9
+\putrectangle corners at 5.0 4.5 and 6.0 5.5
+\put {$35$} [b] at 5.5 5.58
+\putrectangle corners at 6.0 4.5 and 7.0 5.5
+\put {$36$} [b] at 6.5 5.58
+\putrectangle corners at 7.0 4.5 and 8.0 5.5
+\put {$37$} [b] at 7.5 5.58
+\putrectangle corners at 8.0 4.5 and 9.0 5.5
+\put {$38$} [b] at 8.5 5.58
+\putrectangle corners at 9.0 4.5 and 10.0 5.5
+\put {$39$} [b] at 9.5 5.58
+\putrectangle corners at 0.0 2.25 and 1.0 3.25
+\put {$40$} [b] at 0.5 3.33
+\putrectangle corners at 1.0 2.25 and 2.0 3.25
+\put {$41$} [b] at 1.5 3.33
+\putrectangle corners at 2.0 2.25 and 3.0 3.25
+\put {$42$} [b] at 2.5 3.33
+\putrectangle corners at 3.0 2.25 and 4.0 3.25
+\put {$43$} [b] at 3.5 3.33
+\putrectangle corners at 4.0 2.25 and 5.0 3.25
+\put {$44$} [b] at 4.5 3.33
+\putrectangle corners at 5.0 2.25 and 6.0 3.25
+\put {$45$} [b] at 5.5 3.33
+\putrectangle corners at 6.0 2.25 and 7.0 3.25
+\put {$46$} [b] at 6.5 3.33
+\putrectangle corners at 7.0 2.25 and 8.0 3.25
+\put {$47$} [b] at 7.5 3.33
+\putrectangle corners at 8.0 2.25 and 9.0 3.25
+\put {$48$} [b] at 8.5 3.33
+\putrectangle corners at 9.0 2.25 and 10.0 3.25
+\put {$49$} [b] at 9.5 3.33
+\putrectangle corners at 0.0 0.0 and 1.0 1.0
+\put {$50$} [b] at 0.5 1.08
+\putrectangle corners at 1.0 0.0 and 2.0 1.0
+\put {$51$} [b] at 1.5 1.08
+\putrectangle corners at 2.0 0.0 and 3.0 1.0
+\put {$52$} [b] at 2.5 1.08
+\putrectangle corners at 3.0 0.0 and 4.0 1.0
+\put {$53$} [b] at 3.5 1.08
+\endpicture}
+
+\vfil\eject
+
+\item{$\bullet$}
+Here is a snapshot of VPL memory at a point of execution where {\tt bp}, {\tt sp},
+and
+{\tt ip} are as shown.  Demonstrate your 
+understanding of VPL by explaining this snapshot as follows.
+Figure out where the code segment ends and draw a clearly visible vertical line
+between the last cell of the VPL program and the first cell of the stack segment (there is
+no global segment in this program).
+Draw clearly visible boundary lines showing the various stack frames existing at
+this moment.  Finally, fill in memory cells as you
+execution for another function call---start with
+{\tt ip} at 10---and continue up to but not including the next function call after that.
+\medskip
+
+\beginpicture
+\setcoordinatesystem units <0.4true in, 0.4true in>
+\putrectangle corners at 0.0 15.75 and 1.0 16.75
+\put {$4$} at 0.5 16.25
+\put {$0$} [b] at 0.5 16.83
+\putrectangle corners at 1.0 15.75 and 2.0 16.75
+\put {$1$} at 1.5 16.25
+\put {$1$} [b] at 1.5 16.83
+\putrectangle corners at 2.0 15.75 and 3.0 16.75
+\put {$22$} at 2.5 16.25
+\put {$2$} [b] at 2.5 16.83
+\putrectangle corners at 3.0 15.75 and 4.0 16.75
+\put {$0$} at 3.5 16.25
+\put {$3$} [b] at 3.5 16.83
+\putrectangle corners at 4.0 15.75 and 5.0 16.75
+\put {$1$} at 4.5 16.25
+\put {$4$} [b] at 4.5 16.83
+\putrectangle corners at 5.0 15.75 and 6.0 16.75
+\put {$3$} at 5.5 16.25
+\put {$5$} [b] at 5.5 16.83
+\putrectangle corners at 6.0 15.75 and 7.0 16.75
+\put {$0$} at 6.5 16.25
+\put {$6$} [b] at 6.5 16.83
+\putrectangle corners at 7.0 15.75 and 8.0 16.75
+\put {$2$} at 7.5 16.25
+\put {$7$} [b] at 7.5 16.83
+\putrectangle corners at 8.0 15.75 and 9.0 16.75
+\put {$10$} at 8.5 16.25
+\put {$8$} [b] at 8.5 16.83
+\putrectangle corners at 9.0 15.75 and 10.0 16.75
+\put {$26$} at 9.5 16.25
+\put {$9$} [b] at 9.5 16.83
+\putrectangle corners at 0.0 13.5 and 1.0 14.5
+\put {$4$} at 0.5 14.0
+\put {$10$} [b] at 0.5 14.58
+\put {\tt ip} [b] at .5 14.88
+\putrectangle corners at 1.0 13.5 and 2.0 14.5
+\put {$3$} at 1.5 14.0
+\put {$11$} [b] at 1.5 14.58
+\putrectangle corners at 2.0 13.5 and 3.0 14.5
+\put {$28$} at 2.5 14.0
+\put {$12$} [b] at 2.5 14.58
+\putrectangle corners at 3.0 13.5 and 4.0 14.5
+\put {$0$} at 3.5 14.0
+\put {$13$} [b] at 3.5 14.58
+\putrectangle corners at 4.0 13.5 and 5.0 14.5
+\put {$29$} at 4.5 14.0
+\put {$14$} [b] at 4.5 14.58
+\putrectangle corners at 5.0 13.5 and 6.0 14.5
+\put {$22$} at 5.5 14.0
+\put {$15$} [b] at 5.5 14.58
+\putrectangle corners at 6.0 13.5 and 7.0 14.5
+\put {$3$} at 6.5 14.0
+\put {$16$} [b] at 6.5 14.58
+\putrectangle corners at 7.0 13.5 and 8.0 14.5
+\put {$2$} at 7.5 14.0
+\put {$17$} [b] at 7.5 14.58
+\putrectangle corners at 8.0 13.5 and 9.0 14.5
+\put {$11$} at 8.5 14.0
+\put {$18$} [b] at 8.5 14.58
+\putrectangle corners at 9.0 13.5 and 10.0 14.5
+\put {$1$} at 9.5 14.0
+\put {$19$} [b] at 9.5 14.58
+\putrectangle corners at 0.0 11.25 and 1.0 12.25
+\put {$3$} at 0.5 11.75
+\put {$20$} [b] at 0.5 12.33
+\putrectangle corners at 1.0 11.25 and 2.0 12.25
+\put {$0$} at 1.5 11.75
+\put {$21$} [b] at 1.5 12.33
+\putrectangle corners at 2.0 11.25 and 3.0 12.25
+\put {$3$} at 2.5 11.75
+\put {$22$} [b] at 2.5 12.33
+\putrectangle corners at 3.0 11.25 and 4.0 12.25
+\put {$1$} at 3.5 11.75
+\put {$23$} [b] at 3.5 12.33
+\putrectangle corners at 4.0 11.25 and 5.0 12.25
+\put {$2$} at 4.5 11.75
+\put {$24$} [b] at 4.5 12.33
+\putrectangle corners at 5.0 11.25 and 6.0 12.25
+\put {$10$} at 5.5 11.75
+\put {$25$} [b] at 5.5 12.33
+\putrectangle corners at 6.0 11.25 and 7.0 12.25
+\put {$6$} at 6.5 11.75
+\put {$26$} [b] at 6.5 12.33
+%\put {\tt ip} [b] at 6.5 12.65
+\putrectangle corners at 7.0 11.25 and 8.0 12.25
+\put {$2$} at 7.5 11.75
+\put {$27$} [b] at 7.5 12.33
+\putrectangle corners at 8.0 11.25 and 9.0 12.25
+\put {$5$} at 8.5 11.75
+\put {$28$} [b] at 8.5 12.33
+\putrectangle corners at 9.0 11.25 and 10.0 12.25
+\put {$2$} at 9.5 11.75
+\put {$29$} [b] at 9.5 12.33
+\putrectangle corners at 0.0 9.0 and 1.0 10.0
+\put {$0$} at 0.5 9.5
+\put {$30$} [b] at 0.5 10.08
+\putrectangle corners at 1.0 9.0 and 2.0 10.0
+\put {$0$} at 1.5 9.5
+\put {$31$} [b] at 1.5 10.08
+\putrectangle corners at 2.0 9.0 and 3.0 10.0
+\put {$1$} at 2.5 9.5
+\put {$32$} [b] at 2.5 10.08
+\putrectangle corners at 3.0 9.0 and 4.0 10.0
+\put {$30$} at 3.5 9.5
+\put {$33$} [b] at 3.5 10.08
+\putrectangle corners at 4.0 9.0 and 5.0 10.0
+\put {$9$} at 4.5 9.5
+\put {$34$} [b] at 4.5 10.08
+\putrectangle corners at 5.0 9.0 and 6.0 10.0
+\put {$1$} at 5.5 9.5
+\put {$35$} [b] at 5.5 10.08
+\putrectangle corners at 6.0 9.0 and 7.0 10.0
+\put {$2$} at 6.5 9.5
+\put {$36$} [b] at 6.5 10.08
+\putrectangle corners at 7.0 9.0 and 8.0 10.0
+\put {$0$} at 7.5 9.5
+\put {$37$} [b] at 7.5 10.08
+\putrectangle corners at 8.0 9.0 and 9.0 10.0
+\put {$2$} at 8.5 9.5
+\put {$38$} [b] at 8.5 10.08
+\putrectangle corners at 9.0 9.0 and 10.0 10.0
+\put {$33$} at 9.5 9.5
+\put {$39$} [b] at 9.5 10.08
+\putrectangle corners at 0.0 6.75 and 1.0 7.75
+\put {$26$} at 0.5 7.25
+\put {$40$} [b] at 0.5 7.83
+\putrectangle corners at 1.0 6.75 and 2.0 7.75
+\put {$2$} at 1.5 7.25
+\put {$41$} [b] at 1.5 7.83
+\putrectangle corners at 2.0 6.75 and 3.0 7.75
+\put {$4$} at 2.5 7.25
+\put {$42$} [b] at 2.5 7.83
+\putrectangle corners at 3.0 6.75 and 4.0 7.75
+\put {$0$} at 3.5 7.25
+\put {$43$} [b] at 3.5 7.83
+\putrectangle corners at 4.0 6.75 and 5.0 7.75
+\put {$2$} at 4.5 7.25
+\put {$44$} [b] at 4.5 7.83
+\putrectangle corners at 5.0 6.75 and 6.0 7.75
+\put {$39$} at 5.5 7.25
+\put {$45$} [b] at 5.5 7.83
+\putrectangle corners at 6.0 6.75 and 7.0 7.75
+\put {$26$} at 6.5 7.25
+\put {$46$} [b] at 6.5 7.83
+\putrectangle corners at 7.0 6.75 and 8.0 7.75
+\put {$4$} at 7.5 7.25
+\put {$47$} [b] at 7.5 7.83
+\putrectangle corners at 8.0 6.75 and 9.0 7.75
+\put {$8$} at 8.5 7.25
+\put {$48$} [b] at 8.5 7.83
+\putrectangle corners at 9.0 6.75 and 10.0 7.75
+\put {$0$} at 9.5 7.25
+\put {$49$} [b] at 9.5 7.83
+\putrectangle corners at 0.0 4.5 and 1.0 5.5
+\put {$2$} at 0.5 5.0
+\put {$50$} [b] at 0.5 5.58
+\putrectangle corners at 1.0 4.5 and 2.0 5.5
+\put {$45$} at 1.5 5.0
+\put {$51$} [b] at 1.5 5.58
+\putrectangle corners at 2.0 4.5 and 3.0 5.5
+\put {$26$} at 2.5 5.0
+\put {$52$} [b] at 2.5 5.58
+\putrectangle corners at 3.0 4.5 and 4.0 5.5
+\put {$8$} at 3.5 5.0
+\put {$53$} [b] at 3.5 5.58
+\putrectangle corners at 4.0 4.5 and 5.0 5.5
+\put {$16$} at 4.5 5.0
+\put {$54$} [b] at 4.5 5.58
+\putrectangle corners at 5.0 4.5 and 6.0 5.5
+\put {$0$} at 5.5 5.0
+\put {$55$} [b] at 5.5 5.58
+\putrectangle corners at 6.0 4.5 and 7.0 5.5
+\put {$2$} at 6.5 5.0
+\put {$56$} [b] at 6.5 5.58
+\putrectangle corners at 7.0 4.5 and 8.0 5.5
+\put {$51$} at 7.5 5.0
+\put {$57$} [b] at 7.5 5.58
+\putrectangle corners at 8.0 4.5 and 9.0 5.5
+\put {$26$} at 8.5 5.0
+\put {$58$} [b] at 8.5 5.58
+\putrectangle corners at 9.0 4.5 and 10.0 5.5
+\put {$16$} at 9.5 5.0
+\put {$59$} [b] at 9.5 5.58
+\putrectangle corners at 0.0 2.25 and 1.0 3.25
+\put {$32$} at 0.5 2.75
+\put {$60$} [b] at 0.5 3.33
+\putrectangle corners at 1.0 2.25 and 2.0 3.25
+\put {$0$} at 1.5 2.75
+\put {$61$} [b] at 1.5 3.33
+\putrectangle corners at 2.0 2.25 and 3.0 3.25
+\put {$2$} at 2.5 2.75
+\put {$62$} [b] at 2.5 3.33
+\putrectangle corners at 3.0 2.25 and 4.0 3.25
+\put {$57$} at 3.5 2.75
+\put {$63$} [b] at 3.5 3.33
+\put {\tt bp} [b] at 3.5 3.65
+\putrectangle corners at 4.0 2.25 and 5.0 3.25
+\put {$26$} at 4.5 2.75
+\put {$64$} [b] at 4.5 3.33
+\putrectangle corners at 5.0 2.25 and 6.0 3.25
+\put {$32$} at 5.5 2.75
+\put {$65$} [b] at 5.5 3.33
+\putrectangle corners at 6.0 2.25 and 7.0 3.25
+\put {$64$} at 6.5 2.75
+\put {$66$} [b] at 6.5 3.33
+\putrectangle corners at 7.0 2.25 and 8.0 3.25
+\put {$0$} at 7.5 2.75
+\put {$67$} [b] at 7.5 3.33
+\putrectangle corners at 8.0 2.25 and 9.0 3.25
+\put {$2$} at 8.5 2.75
+\put {$68$} [b] at 8.5 3.33
+\putrectangle corners at 9.0 2.25 and 10.0 3.25
+\put {$69$} [b] at 9.5 3.33
+\put {\tt sp} [b] at 9.5 3.65
+\putrectangle corners at 0.0 0.0 and 1.0 1.0
+\put {$70$} [b] at 0.5 1.08
+\putrectangle corners at 1.0 0.0 and 2.0 1.0
+\put {$71$} [b] at 1.5 1.08
+\putrectangle corners at 2.0 0.0 and 3.0 1.0
+\put {$72$} [b] at 2.5 1.08
+\putrectangle corners at 3.0 0.0 and 4.0 1.0
+\put {$73$} [b] at 3.5 1.08
+\putrectangle corners at 4.0 0.0 and 5.0 1.0
+\put {$74$} [b] at 4.5 1.08
+\putrectangle corners at 5.0 0.0 and 6.0 1.0
+\put {$75$} [b] at 5.5 1.08
+\putrectangle corners at 6.0 0.0 and 7.0 1.0
+\put {$76$} [b] at 6.5 1.08
+\putrectangle corners at 7.0 0.0 and 8.0 1.0
+\put {$77$} [b] at 7.5 1.08
+\putrectangle corners at 8.0 0.0 and 9.0 1.0
+\put {$78$} [b] at 8.5 1.08
+\endpicture
+
+\vfil\eject
+
+\item{$\bullet$}
+Write a fragment of VPL code that is a reasonable translation of each fragment
+of Java-like code shown below.  Assume that {\tt A} and {\tt B} are sequences of 0 or
+more statements in the Java-like language, and denote the translation of a sequence of 0 or more
+statements {\tt A} to VPL by the function call {\tt v(A)}---so {\tt v(A)} is
+the sequence of VPL statements that {\tt A} translates to.
+Also assume that the variable {\tt x} translates to local cell 7 in the
+function where this fragment occurs, and that
+the variable {\tt y} translates to global cell 3.
+If you need any additional memory cells, assume that you can freely
+use local cells
+10, 11, and so on, as needed.
+Use labels starting with 1000 in the code you generate.
+\bigskip
+
+\verbatim
+if( x < y )
+{
+   A
+}
+else
+{
+  B
+}
+|endverbatim
+
+\vfil
+
+\verbatim
+for( x=1; x<10; x++ ){
+   A
+}
+|endverbatim
+
+\vfil\eject
+
+\item{$\bullet$}
+Suppose we want to add a command to VPL that will allow us to
+get the physical address---the index in the memory array---of a local cell
+in the currently active stack frame
+and store it in some local cell.
+This would be useful, for example, if we wanted to implement pass-by-reference.
+\medskip
+
+Specifically,
+suppose we want to add a command with this specification:
+
+\halign{\tabskip 0.25true in
+{\tt #}\hfil& #\hfil& \vtop{\hsize 3.5true in \baselineskip  0.8\baselineskip #}\hfil\cr
+\noalign{\smallskip\hrule\smallskip}
+Instruction& Mnemonic& Semantic Description\cr
+\noalign{\smallskip\hrule\smallskip}
+42 a b& get address&  Get the index in the memory array of local cell {\tt b} and store it
+in local cell {\tt a}.\cr       
+\noalign{\smallskip\hrule\smallskip}
+}
+\medskip
+
+Your job is to write code  that will implement this new command. 
+Your code must fit in with the fragments of code shown.  Specifically, assume that
+{\tt op} holds the current operation number, which is stored in
+{\tt mem[ip]}, and the variables {\tt a}, {\tt b}, and {\tt c}
+hold the arguments to the command, from cells {\tt mem[ip+1]}, {\tt mem[ip+2]}, and
+{\tt mem[ip+3]}.
+\medskip
+
+Note that you have to write code that will cause the desired behavior {\it and\/}
+correctly update {\tt ip}.
+\medskip
+
+{\baselineskip 0.8\baselineskip
+
+\verbatim
+    do{
+      op = mem[ ip ];  ip++;
+      // code to extract op and the args into a, b, c 
+      // for convenience omitted    
+      ...  (lots  of code omitted) ....
+      else if( op == 22 )    // literal
+      {
+        mem[ bp+2+a ] = b;
+        ip += 3;
+      }
+      else if( op == 23 )  // copy
+      {
+        mem[ bp+2+a ] = mem[ bp+2+b ];
+        ip += 3;
+      }
+      else if( op == 24 )  // add
+      {
+        mem[ bp+2+a ] = mem[ mem[ bp+2+b] + mem[ bp+2+c ] ];
+        ip += 4;
+      }
+      ... (lots more code omitted )...
+      // write your code to implement command 42 here:
+|endverbatim
+\vfil
+\verbatim
+      else
+      {
+        System.out.println("Fatal error: unknown opcode [" + op + "]" );
+        System.exit(1);
+      }
+       
+    }while( !done );
+|endverbatim
+\par
+}
+\eject
+
+
+{\bigboldfont A Survey of Memory Issues in Some Early Imperative Languages}
+\medskip
+
+We will now look at a number of memory models used in early imperative languages that differ from
+VPL.
+\medskip
+
+\Indent{1}
+   The VPL memory model is actually closest to the non-object-oriented parts of Java,
+   which is pretty much the same as C, except C had powerful features---discussed later---that
+   were eliminated from Java.
+\medskip
+\Outdent
+
+In this discussion we will refer to various memory
+models by the language that more or
+less follows that model, but we don't care about the details,
+just the main ideas.
+\medskip
+
+In all this work, we will imagine that a Java program, with its own
+vast memory, is used to translate the source code into VPL-like
+language, using whatever memory resources and data structures it
+needs, but then at run-time the program is executed using just the 
+single memory array, together with a fixed set of Java variables
+acting as ``registers.''  This is identical to how we implemented VPL.
+\medskip
+
+We will only look at features of these languages that correspond to
+VPL abilities, namely working with integers only.
+\medskip
+
+ {\bf Some Terminology}
+ \medskip
+ 
+ People talking about programming languages (including us in the following material) often use terms related to
+ the {\it semantics\/} of a language, including:
+ \medskip
+ 
+ \Indent{1}
+ {\it scope (also known as ``visibility''):}  the region of code in which a particular variable has the same meaning,
+ in the sense that it refers to the same cell in memory
+ \medskip
+ 
+ {\it binding time:}  the time in the entire process when the meaning of an entity (usually a variable, sometimes
+ other things) in the
+ code is ``bound'' to its meaning (memory cell for a variable).
+ Some things (e.g. {\tt int} literals in Java) are bound at {\it language design time}.
+ Other things (e.g. {\tt final static} variables in Java) are bound at compile time
+ 
+ \Indent{1}
+  (probably---as the assembly language code is produced from the Java code, every occurrence of
+ such a variable might be replaced by its value).
+ \medskip
+ \Outdent
+ Other things (e.g. the location of a local variable in a method in Java, which will be somewhere on the
+ stack which is unknowable until the code is executed) are bound at {\it run time}.
+ \bigskip
+ \Outdent
+ 
+ We will tend in the following to be more precise, as we present memory models for the various languages
+ at a level like we have done for VPL.
+ \medskip
+ 
+ Language implementations fall into two main categories, namely {\it translated\/} (old timey word for this
+ was ``compiled'') or {\it interpreted}.  This distinction actually only refers to the typical 
+ approach for 
+ a given
+ language---any language can in principle be translated---have the entire
+ source code for some program in the language translated to code in
+ some other language which can then somehow be executed---or interpreted---have individual statements 
+ be processed and executed---but it might be more common or convenient to do one or the other.
+ \medskip
+ 
+ Java is typically translated---from Java source code for a class to Java virtual machine language code
+ for that same class---with the Java ``byte code''---the {\tt .class} files---being interpreted.
+ But, there are Java compilers that translate from Java source code to assembly language code for a
+ particular platform (CPU and operating system).
+ \border
+ 
+{\bigboldfont The Basic Model}
+\medskip
+
+By ``Basic' here we mean the old-time programming language ``Beginner's 
+All-Purpose Symbolic Instruction Code.''
+\medskip
+
+Here are the core features of this memory model:
+\medskip
+
+  \In
+  
+  \item{$\bullet$}  The language is best thought of as interpreted.
+  \medskip
+  
+  \item{$\bullet$} All variables have global scope---they 
+can be accessed anywhere in the program, with the same
+meaning.  As each identifier (for a ``variable'')
+ is encountered for the first time during execution of the
+code, it is assigned to a memory cell.  Later occurrences of the same identifier 
+mean the same memory cell.
+  \medskip
+
+  \item{$\bullet$} Support for subprograms is minimal---just 
+  the {\tt gosub} and {\tt return}
+  commands, with no named subprograms, no
+  parameters, and no local variables.
+  \medskip
+
+  \item{$\bullet$} No dynamic memory features, except sort of for
+  arrays.
+  \medskip
+
+  \item{$\bullet$} Arrays are created in the global memory space,
+   and are allowed to have the size of an array only known at
+   run-time.  Arrays are created by the {\tt dim} command, 
+   such as {\tt dim a(6)} meaning to create an array named {\tt a}
+   that has 6 memory cells allocated.
+  \medskip
+\Out
+
+\doit Develop a scheme for memory usage for this model, 
+in the spirit of the memory pictures we drew for VPL.  
+\medskip
+
+\doit Is recursion supported by this model?
+\medskip
+
+\doit Could Basic really be implemented by translation in the sense
+of scanning the code and mapping variables to memory cells before
+actually executing the translated code?
+\border
+
+{\bigboldfont The Pre-90 Fortran Model}
+\medskip
+
+Note:  the following is discussing Fortran as it was in the early days (Fortran 77, maybe?).  Apparently modern
+Fortran (Fortran 90 and up) has lots of further features, including recursion and objects.
+This reminds me of the old joke:  ``what will the language of the future be like?''
+``I don't know, but it will be called `Fortran' .''
+\medskip
+
+  \In
+  \item{$\bullet$} All variables have local scope---they can only be accessed in the
+  subprogram where they occur.
+  \medskip
+
+  \item{$\bullet$} Parameter passing is done by ``pass by reference.''  This means that
+  the address of an argument is passed to the subprogram, and the compiler translates
+  all occurrences of parameters to use the memory location with the address stored
+  in the parameter.
+  \medskip
+
+  \item{$\bullet$} No dynamic memory.  Array declarations must have a size that can
+  be determined statically---that is, at compile time.
+  \medskip
+
+  \item{$\bullet$} No recursion.
+  \medskip
+\Out
+
+\doit Develop a scheme for memory usage for
+this model, in the spirit of the
+  memory pictures we drew for VPL.  Think about how a translator for this language would
+  deal with variables.    Note that with this model, values of local variables can have a lifetime
+  that is the lifetime of the program execution.
+\medskip
+
+\doit Be careful to understand exactly how pass-by-reference works.
+\medskip
+
+\doit  Why is recursion not allowed?  Why must arrays have
+their size known at compile-time?
+\border
+  
+{\bigboldfont The Pascal Model}
+\medskip
+
+  \In
+
+  \item{$\bullet$} Parameter passing is done by pass by value or pass by reference, depending
+  on whether the parameter has a special key word ({\tt var}, in case you care) occurring in its
+  declaration to specify pass by reference.
+  \medskip
+
+  \item{$\bullet$} Dynamic memory is allowed, through the ability to 
+  allocate any number of bytes on the heap during execution.
+  \medskip
+
+  \item{$\bullet$} Scoping of variables is very complicated, because {\it nested subprograms\/}
+  are allowed.  In other words, subprograms are declared within subprogram bodies, much like
+  local variables.
+  \medskip
+  
+ \doit  Consider why this seems like a good idea.  Programming language experts
+ speak of the idea of ``orthogonality'' in programming language design.  The following discussion
+ will indicate why this is not such a good idea, maybe---is the additional complexity worth it?
+ \medskip
+ 
+  \item{$\bullet$} In fact, there are two different ideas for scoping in such a language, known
+  as static (or lexical) scoping and dynamic scoping.   Pascal actually uses static scoping, but we will
+  ponder both approaches here.
+  \medskip
+
+  \item{$\bullet$}  To deal with the semantics of  nested subprograms, we will use the
+  following execution model:
+  \medskip
+  \In
+    Instead of stack frames on a linear strip of memory like we have been doing,
+    we will use a 2D picture.  A rectangle is drawn to represent the local variables and
+    subprograms for a subprogram.  Each such rectangle is labeled in its upper right
+    corner by the name of the subprogram.
+    In the upper left corner of each
+    rectangle we write all the identifiers---variables and subprogram names---that are
+    declared within the subprogram.
+    \medskip
+    
+    Start with a large box representing the entire program, and
+  start executing the body of the program in this context.  When a subprogram is called,
+  draw a box for it either inside the active box (that's dynamic scoping) or immediately
+  inside the box where the subprogram name is declared (that's static scoping).
+  \medskip
+  
+  The meaning of an identifier---both variables and subprograms---is determined 
+  by first looking at the upper left corner of
+  the current box, and then scanning {\it outward\/} until the identifier is first located.
+  \medskip
+
+  \item{$\Rightarrow$\quad}  Find or write some Pascal code and execute it according to these
+  rules.  Execute the same code with both scoping models.
+  \medskip
+  
+  \item{$\Rightarrow$\quad} Draw a possible memory picture for this model, in the spirit of the
+  memory pictures we drew for VPL.  Note that the boxes we draw are essentially
+  stack frames,
+  and try to figure out how a stack frame could hold the
+  information necessary to implement each scoping model.  
+  \border
+  \Out
+
+{\bigboldfont The C Model}
+\medskip
+
+  C was invented in an era when
+  Pascal-like languages (actually as we read online the first day, Niiklaus Wirth
+  invented Pascal as a simpler language reacting to the complexity of Algol 68)
+   were dominant and represented a step toward 
+  simplicity.
+  \medskip
+
+  \item{$\bullet$}  C has variables and functions similar to Java's {\tt static} fields and
+  methods.  Variables declared outside any function are visible to any function (there are
+  lots of details about occurrence within files, but we don't care much).
+  \medskip
+  
+  \item{$\bullet$} C only implements pass-by-value, but it has operators
+  * (with {\tt int * x} meaning {\tt x} holds an address, and {\tt *x} used in an
+  expression meaning the cell(s) that {\tt x}'s address points to), and
+  \& (the ``address of'' operator)
+  \medskip
+
+  \item{$\bullet$} Dynamic memory is  allowed.
+  \medskip
+ 
+ \item{$\bullet$}  C only has functions.  Earlier languages (notably Fortran and Pascal) had both
+ functions (subprograms that return a value) and subroutines/procedures (subprograms that
+ don't return a value).
+ \medskip
+  \item{$\Rightarrow$\quad} Draw a possible memory picture for the C model, in the spirit of the
+  memory pictures we drew for VPL.   Be sure to include the fact that C allows arbitrarily
+  large arrays and {\tt struct} variables to be local variables.
+  \medskip
+  \Out
+
+\vfil\eject
+
+{\bigboldfont Official Announcement of Policy Change}
+\medskip
+
+Some people have asked to work in groups of size larger than three on the Projects, so I
+am somewhat reluctantly changing the course policy to allow groups of up to five students submitting
+Projects together.  If you want to have six people in a group, you must ask for permission.
+Larger groups will not be allowed.
+\border
+
+{\bigboldfont Follow-up to Exercise 5 and 6}
+\medskip
+
+After the whole group discussion during
+class session 5, Jimmy and I (Peter was flooded out), but I'll take most of the blame, designed
+the new language to be named {\tt Jive}.
+\medskip
+
+I then proceeded over the weekend to begin implementing a Jive to VPL translator, as a sanity check before
+assigning the same work as Project 2.    To avoid burying the lede (yes, that's not the word ``lead'' as
+I thought my whole life until recently), I'm not going to assign this work for Project 2, because it seemed
+too much.  Instead, you will be responsible (on Test 1) 
+for the concepts of this work:  being able to hand-execute
+a given Jive program, being able to write a Jive program to perform a specified task, and, most importantly,
+being able to translate a given Jive program into VPL.
+\medskip
+
+You can find the code I'm writing in the {\tt Jive} folder at the course web site.  I hope to finish it by 9/11/2018.
+\medskip
+
+\doit I will present the draft design for Jive, driven by the draft finite automata hand-written on the next page.
+Feedback will be considered (but I've done a fair amount of the implementation work, so I won't
+be too open to changes other than correcting problems.
+\medskip
+
+\doit Write a Jive program that will get a positive integer $n$ from the user and will then compute and
+report $n!$.
+\medskip
+
+\doit Hand-translate this program to VPL, demonstrating the ideas of my partially-completed code.
+\border
+
+{\bigboldfont Exercise 7}
+\medskip
+
+Working in your small group, write the following Jive programs, and translate each into VPL:
+\medskip
+
+\Indent{1}
+\item{$\bullet$} The same goal as Exercise 1, part c.
+\medskip
+
+\item{$\bullet$} The same goal as Exercise 1, part d.
+\medskip
+
+\item{$\bullet$} The same goal as Exercise 3.
+
+\medskip
+\Outdent
+
+\vfil\eject
+
+{\bigboldfont Exercise 8}
+\medskip
+
+Note:  do this before Exercise 7!
+\medskip
+
+I've been working as time allows on the Jive implementation (current version available at the course web site).
+You can help me debug it!
+\medskip
+
+Here is the {\tt factorial.jive} program next to the translated VPL version:
+\bigskip\bigskip
+
+\hbox to \hsize{%
+\hfil%
+\vbox{\hsize 2.5true in
+\listing{../Jive/Tests/factorial}{\tt}
+}
+\hfil
+\vbox{\hsize 1.5true in
+\listing{../Jive/Tests/factorial.vpl}{\tt}
+}%
+\hfil}
+
+\vfil\eject
+
+{\bigboldfont The Jive Manual}
+\bigskip
+
+In the following, quantities in angle brackets, like {\tt <funcName>}, represent single
+non-terminal symbols in the given grammar (we'll talk more carefully about context free grammars later).
+Other symbols represent physical symbols that can be typed in a Jive program file.
+\medskip
+
+A context free grammar is basically a collection of rules that say the quantity on the left can be
+replaced by the quantities on the right of the arrow (the arrow used in CFG's is 
+different from the two physical symbols {\tt ->} that appear in Jive code).
+\medskip
+
+Note that I'm using a CFG to specify Jive, instead of a finite automaton like I gave you earlier,
+ because it is easier to type grammar rules than to typeset diagrams.
+ \medskip
+ 
+ Quantities that appear in square brackets, like {\tt [ <var> ]}, are optional.
+ \medskip
+ 
+Here are the {\it syntax\/} rules ( with some English mixed in to the rules, purely
+for convenience). 
+\medskip
+
+{\baselineskip 1.5 \baselineskip
+
+{\tt <Jive program>} $\rightarrow$ {\tt [ <globalDec> ]  <main> [ <functions> ] }
+
+{\tt <globalDec>} $\rightarrow$ {\tt Globs [ <params> ] .} 
+
+{\tt <params>} $\rightarrow$ zero or more {\tt <param>}
+
+{\tt <functions>} $\rightarrow$  zero or more {\tt <function>} 
+
+{\tt <main>} $\rightarrow$ zero or more {\tt <statement>}
+
+{\tt <statements>} $\rightarrow$ zero or more {\tt <statement>}
+
+{\tt <function>} $\rightarrow$ {\tt Def <funcName> [ <params> ] .  <statements>} 
+\bigskip
+
+{\tt <statement>} $\rightarrow$ {\tt /* } any words that are not */ {\tt */} 
+
+{\tt <statement>} $\rightarrow$ {\tt Halt} 
+
+{\tt <statement>} $\rightarrow$ {\tt NL}  
+
+{\tt <statement>} $\rightarrow$ {\tt <label>}
+
+{\tt <statement>} $\rightarrow$ {\tt Jmp <label>}
+
+{\tt <statement>} $\rightarrow$ {\tt <part1> -> <part2>}
+\medskip
+
+\vfil\eject
+
+{\tt <part1>} $\rightarrow$ {\tt <bif2> <var> <var>} 
+
+{\tt <part1>} $\rightarrow$ {\tt <bif1> <var>}
+
+{\tt <part1>} $\rightarrow$ {\tt Keys}
+
+{\tt <part1>} $\rightarrow$ {\tt <funcCall> [ <vars> ] .}
+
+{\tt <part1>} $\rightarrow$ {\tt <var>}
+
+{\tt <part1>} $\rightarrow$ {\tt Fet <param>}
+\bigskip
+
+{\tt <funcCall>} $\rightarrow$ {\tt <funcName> }  followed by 0 or more {\tt <var>} 
+\bigskip
+
+{\tt <part2>} $\rightarrow$ {\tt .}
+
+{\tt <part2>} $\rightarrow$ {\tt Prt}
+
+{\tt <part2>} $\rightarrow$ {\tt Sym}
+
+{\tt <part2>} $\rightarrow$ {\tt Ret}
+
+{\tt <part2>} $\rightarrow$ {\tt <var>}
+
+{\tt <part2>} $\rightarrow$ {\tt Jmp <label>}
+
+{\tt <part2>} $\rightarrow$ {\tt Put <var> <var>}
+
+{\tt <part2>} $\rightarrow$ {\tt Sto <params>}
+\bigskip
+
+{\tt <param>} $\rightarrow$ a lowercase letter followed by zero or more letters or digits 
+
+{\tt <funcName>} $\rightarrow$ an uppercase letter followed by zero or more letters or digits
+
+{\tt <label>} $\rightarrow$ any sequence of letters or digits ending with a colon 
+
+{\tt <var>} $\rightarrow$ either an integer literal or any sequence of letters and digits starting with a\hfil\break
+\vskip -0.4true in \leavevmode \hskip 0.75true in  lowercase letter 
+
+{\tt <bif2>} $\rightarrow$ a built-in function with two arguments, namely one of \hfil\break
+\vskip -0.4true in \leavevmode \hskip 0.75true in 
+{\tt Add, Sub, Mult, Quot, Rem, Eq, NotEq, Less, LessEq, And, Or, Get}
+
+{\tt <bif1>} $\rightarrow$ a built-in function with one argument, namely one of \quad {\tt Not, Opp, New}
+
+\bigskip
+}
+\border
+
+{\bf Semantics of Jive}
+\medskip
+
+The semantics (meaning) of Jive programs is intended to be obvious to the experienced VPL programmer,
+because Jive constructs translate fairly directly to VPL commands (that was our design goal for this new
+language).  
+\medskip
+
+For clarity we should say that every {\tt <part1>} somehow generates a value which is then used in the
+matching {\tt <part2>} in some fairly obvious way.
+
+\vfil\eject
+\bye

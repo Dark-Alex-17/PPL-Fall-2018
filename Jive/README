@@ -1,0 +1,67 @@
+Have begin implementation of Jive, working on state 8.
+
+Through Tuesday, 9/11 made good progress, but still
+some problems.
+
+  JiveVPL.save can be copied to JiveVPL.class to
+  allow running my VPL interpreter (version that
+  takes the memory produced by Jive.java) on
+  a given VPL file produced by Jive.
+
+As of Sunday, 9/16/2018, at noon, Jive is initially
+implemented, testing on a few test cases 
+(may still have errors, of course, but is useable
+for demonstrating the desired translation from
+Jive to VPL)
+
+All the tests in the folder Tests seem to be working.
+
+To run my VPL simulator on a VPL program produced by
+Jive, you need to compile IntPair.java and 
+then
+
+copy VPL.save to VPL.class 
+
+(I'm hiding my VPL source code so Project 1 isn't ruined).
+
+September 17:
+
+  in class we wrote a little Jive program, named "sept17",
+that was supposed to ask the user for n and
+then store in an array n followed by the first n
+Fibonacci numbers (we left off the first 1, which was
+fine for our purposes), and then
+display that array.
+
+  When we translated the Jive program to VPL and then
+  ran the VPL program, the behavior was weird.
+
+  After class I found the following errors in the
+  Jive program (yay---not in Jive.java, my translator):
+
+    first, we forgot to put a Halt command in the
+    "main" at the end, so after doing whatever work
+    was in "main", it continued into the next function,
+    or something.  At any rate, it was bad, and was
+    cured by putting in the Halt command.
+
+    second, nothing was displaying.  I figured out
+    after a while that we had forgotten to store 
+    the value n at offset 0 in the array.  When I
+    put in the code:
+
+         size -> Put array 0,
+
+    the program behaved as desired, except at the end 
+    it crashed.   After some work, I realized that I
+    (with no one else to blame), should have done
+
+         n -> Put array 0
+
+    With that change, sept17 worked perfectly
+    (up to n==45---for larger n, integer
+     overflow produced nonsensical results at the
+     end the sequence).
+
+The punchline is, we didn't find a problem with
+Jive.java!

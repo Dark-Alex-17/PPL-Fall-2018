@@ -1,0 +1,262 @@
+\input /Users/Shared/TeX/defs
+\input pictex
+\input /Users/Shared/TeX/ruled
+
+%\advance \voffset by 1true in
+
+\pageno -1
+\parindent 0true in
+
+\datestartup{CS 3210 Fall 2018}{-1}   % crucial for all later handouts
+
+\line{\bf CS 3210 Principles of Programming Languages \hfil Fall 2018}
+\medskip
+\hrule
+\bigskip
+Instructor: Jerry Shultz
+\medskip
+\hrule
+\medskip
+\line{Office: {AES Building, Room 200Z}\hfil Phone: {\bf 303 615 1161}}
+\medskip
+\line{Email: {\bf shultzj@msudenver.edu}\hfil Website: {\bf rowdysites.msudenver.edu/$\sim$shultzj}}
+\medskip
+\hrule
+\medskip
+
+\input schedule
+\medskip
+\hrule
+\medskip
+
+The times listed as ``Office Hours'' are times that I will be sitting in my office waiting to help you when you call or come by (barring emergencies and
+quick trips away and back, and travel time from and to classes).
+\medskip
+ You are
+welcome to stop by any time on the chance that I'll be there and will be able to meet with you.
+Finally, if those times are not convenient for you, we can arrange a mutually convenient time
+to meet.
+\bigskip
+
+\vfil\eject
+
+\line{\bf Text:\hfil}
+
+Written materials provided by instructor and online resources
+
+\medskip
+
+\line{\bf Prerequisites\hfil}
+CS 2050, CS 2400, CS 3250, and MTH 3170, all with a grade of C or better, or permission of instructor
+\medskip
+
+%\line{\bf Official Syllabus\hfil}
+
+%You can find the official syllabus for this course at {\tt https://mcs.msudenver.edu/syllabi}
+%\medskip
+
+
+{\bf Withdrawal dates} for FULL-TERM courses are:
+\medskip
+
+\ruledtable
+100\% refund: |  Sunday, August 26 \nr
+50\% refund:  | Wednesday, September 5 \nr
+Last Day for W:   | Wednesday, November 2
+\endruledtable
+\medskip
+
+{\advance \leftskip .5true in
+For all full-term and part-term courses, you can confirm withdrawal dates on your
+
+$\underline{\hbox{Student Detail Schedule}}$
+\medskip
+}
+
+{\bf Holiday information:}
+
+Labor Day:  September 3 (campus closed)
+
+Fall Break: November 19--25 (no classes, campus open except on 11/22 and 11/23)
+\medskip
+ 
+ {\bf University Policies}
+\medskip
+
+Students are responsible for full knowledge of the provisions and regulations pertaining
+to all aspects of their attendance at MSU Denver, and should familiarize themselves with 
+the following policies:
+
+{\advance \leftskip .5true in
+\item{1.}  GENERAL UNIVERSITY POLICIES
+
+\item{2.} GRADES AND NOTATIONS including WITHDRAWAL FROM A COURSE,\hfil\break ADMINISTRATIVE
+WITHDRAWAL, and INCOMPLETE POLICY
+
+\item{}  Students should be aware that any kind of withdrawal can have a negative impact on some
+types of financial aid, including scholarships.
+
+\item{3.}  ACADEMIC INTEGRITY
+
+\item{4.} POLICY STATEMENTS ON SEXUAL MISCONDUCT
+
+\item{5.}  ACCOMMODATIONS TO ASSIST INDIVIDUALS WITH DISABILITIES
+
+\item{6.}  CLASS ATTENDANCE
+
+\item{7.} ELECTRONIC COMMUNICATION (STUDENT EMAIL) POLICY
+\medskip
+}
+
+For a complete description of these policies go to
+ {\tt msudenver.edu/math/policies}
+
+\border
+ 
+ {\bf Additional Policies for this Course}
+\medskip
+
+If you must miss a class session,  it is your
+responsibility to find out what you missed and make up work if possible.
+If you miss a test due to an appropriate cause (illness, unavoidable family or work conflicts,
+religious holiday, etc.), you
+are responsible for arranging with me a time to take a make-up exam.
+\border
+
+\vfil\eject
+
+\font \smallerfont cmr10 scaled 800
+\font \smallertt cmtt10 scaled 800
+
+\line{\bf Course Organization and Rules\hfil}
+\medskip
+
+In a typical class session I will present some new material---Mini-Lectures---with that material written up 
+ in the
+course notes.  Then students will work on Exercises giving hands-on work with the new material.
+Some Exercises will involve hand-written solutions and should be done, ideally, working in groups of
+four or five using a section of whiteboard.  Other Exercises will involve writing code on a computer and
+should be done, ideally, working in groups of two or three with at least one laptop computer brought in
+by a student.
+As students work on these Exercises, the instructor and two Learning Assistants will be available to
+discuss issues that come up.
+\medskip
+
+Note that these Exercises are designed to provide a more effective alternative to listening to lectures all
+the time.  The Exercises are not graded, but if you do not complete them during class time (especially if
+you are not in class) you should complete them outside of class.  If you are unable to do the Exercises,
+you will probably not do well on the corresponding questions on the Tests.
+It is strongly encouraged that you work in groups, because for most people this is helpful, but it is not
+required.
+\medskip
+
+At times we will discuss Exercises as a whole group after students have had time to work on them separately.
+\medskip
+
+I will post all course materials, including the written ``course notes'' corresponding to the 
+mini-lectures, and any summaries of whole group discussions of Exercises,
+at\hfil\break
+{\tt rowdysites.msudenver.edu/$\sim$shultzj}
+\bigskip
+
+Your ``homework'' for this course will be to go over the new material and corresponding Exercises as needed,
+and to complete a number of programming Projects.
+\medskip
+
+You are encouraged to discuss the course
+material, the Exercises, and even the Projects
+with other students, me, the Learning Assistants, or whomever you wish, 
+but you may not receive any help from anyone on the Tests.
+Also, while you are encouraged to discuss the Projects
+with others, you may not directly copy the work of
+others---any work that you submit should, at a minimum,
+be ``written in your own words.''
+\medskip
+
+It is okay, even encouraged, to do the Projects as a group effort with at most three people participating fully.
+If your work on a Project is part of a group effort, the group must turn in one submission,
+with the two or three group members clearly identified.  If you do this, be sure that it is an
+actual meaningful collaboration, not just giving the work of one person to the others.  And,
+when one group member emails me the group submission, be sure to ``CC'' the other
+one or two group members so they also receive the feedback email from me.
+\medskip
+
+Each project will be worth some number of project points, varying somewhat from project to project to
+reflect the work involved in each one.
+If your project does not fully meet the specifications, you will be given feedback and will have the
+opportunity, with no penalty, to fix the problems and resubmit your work.
+Only very limited partial credit will be given for work that is not correct and complete, and this will
+happen only when you do not resubmit your work, typically at the end of the semester when you simply
+run out of time.
+\medskip
+
+Each Project will have a due date by which your first serious submission must be made.
+When a Project is specified its tentative due date will be given, but sometimes we will adjust that
+date to a later date.
+You will be allowed to fix/complete work on projects later as long as you make a first 
+meaningful submission on time.
+Projects not submitted by the due date
+ will not be accepted.
+\bigskip
+
+We will have three in-class Tests, each covering roughly the previous five weeks of material.
+You will be allowed to use any written materials during the Tests, but you will not be allowed to
+use any electronic devices.
+\medskip
+
+Here is the schedule for the tests:
+\medskip
+
+\ruledtable
+Test Number | Date | Class Periods Covered \cr
+Test 1 | September 26  | 1--8  \nr
+  | (class period 11) | \cr
+Test 2 | October 29 | 9, 10, 12--17 \nr
+ | (class period 20) | \cr
+Test 3 | December 10 or 12  | 18, 19, 21--27 \nr
+ | (scheduled final exam time) |  
+\endruledtable
+\bigskip}
+
+Here is how course grades will be figured:
+\medskip
+
+{\advance \leftskip 0.5true in
+
+Your {\tt testScore} will be computed by averaging your three test scores.  Each test score is computed by dividing the points you got by the
+number of points possible (so test ``points'' have different values on each test---they are just a convenient way of doing the partial credit
+accounting on each problem).
+\medskip
+
+Your {\tt projectScore} will be the number of project points you got divided by the number of 
+project points possible. 
+\medskip
+
+Your course score is then computed as 
+\smallskip
+{\tt 0.4 * projectScore + 0.6 * testScore}
+\medskip
+
+Your course grade is then computed according to this chart:
+\medskip
+}
+
+%\TightTables
+
+\def\tablespace{\hskip 0.05true in}
+\def\tw{.35true in}
+
+\font \tinytt cmtt10 scaled 500
+\ruledtable
+\bf Score in: |  \rtitem{\tw}{\tinytt [0,60)} | \rtitem{\tw}{\tinytt [60,63)} | \rtitem{\tw}{\tinytt [63,67)} | \rtitem{\tw}{\tinytt [67,70)} | \rtitem{\tw}{\tinytt [70,73)} | \rtitem{\tw}{\tinytt [73,77)} | \rtitem{\tw}{\tinytt [77,80)} | \rtitem{\tw}{\tinytt [80,83)} | \rtitem{\tw}{\tinytt [83,87)} | \rtitem{\tw}{\tinytt [87,90)} | \rtitem{\tw}{\tinytt [90,93)} | \rtitem{\tw}{\tinytt [93,100]} \cr
+\bf Grade: | \rtitem{\tw}{F}  | \rtitem{\tw}{D-} | \rtitem{\tw}{D} | \rtitem{\tw}{D+} | \rtitem{\tw}{C-} | \rtitem{\tw}{C} | \rtitem{\tw}{C+} | \rtitem{\tw}{B-} | \rtitem{\tw}{B} | \rtitem{\tw}{B+} | \rtitem{\tw}{A-}  | \rtitem{\tw}{A}
+\endruledtable
+\medskip
+
+{\advance \leftskip .5true in
+with the additional rule that I will improve your grade by one level (one column farther to the right) if you have good attendance and participation.
+\bigskip
+}
+
+\vfil\eject
+\bye

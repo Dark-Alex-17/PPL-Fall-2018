@@ -1,0 +1,31 @@
+/*  do some function
+definitions and calls
+in various orders
+*/
+
+Keys -> x
+
+F 2 x -> a
+
+a -> Prt
+NL
+
+Halt
+
+Def G a b c .
+
+Mult a b -> x
+Mult x c -> x
+
+x -> Ret
+
+Def F a b .
+
+Add a 1 -> c
+Sub b 1 -> d
+
+G c d 5 -> r
+
+r -> Ret
+
+

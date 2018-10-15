@@ -1,0 +1,22 @@
+Keys -> row
+Keys -> col
+
+PasTri row col -> Prt
+
+Halt
+
+Def PasTri row col .
+
+Eq col 0 -> temp1
+Eq row col -> temp2
+Or temp1 temp2 -> easy
+easy -> Jmp easy:
+
+Sub col 1 -> upLeft
+Sub row 1 -> rowAbove
+PasTri rowAbove upLeft -> res1
+PasTri rowAbove col -> res2
+Add res1 res2 -> Ret
+
+easy:
+  1 -> Ret

@@ -1,0 +1,51 @@
+
+GetList -> a
+PutList a -> .
+
+Halt
+
+/*--------------------------------------*/
+Def GetList .
+
+Keys -> size
+
+Add size 1 -> objSize  /* 1 extra cell for size */
+
+New objSize -> list
+
+size -> Put list 0   /* store size at index 0 */
+
+1 -> index
+
+top:
+
+  Less size index -> Jmp exit:
+     Keys -> input
+     input -> Put list index
+     Add index 1 -> index
+
+  Jmp top:
+
+exit:
+
+list -> Ret
+
+/*--------------------------------------*/
+Def PutList list .
+
+0 -> index             /* get size of list */
+Get list index -> size
+
+1 -> index
+
+top:
+
+  Less size index -> Jmp exit:
+     Get list index -> value
+     value -> Prt   32 -> Sym
+     Add index 1 -> index
+
+   Jmp top:
+exit:
+
+0 -> Ret

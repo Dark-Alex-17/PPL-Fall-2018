@@ -1,0 +1,27 @@
+Keys -> x
+
+top:
+
+  x -> Prt   NL
+
+  Eq x 1 -> Jmp exit:
+
+    Rem x 2 -> r
+    Eq r 0 -> Jmp even:
+    Jmp odd:
+
+    even:
+       Quot x 2 -> x
+
+    Jmp top:
+
+    odd:
+       Mult 3 x -> x
+       Add x 1 -> x
+
+    Jmp top:
+
+exit:
+
+Halt
+

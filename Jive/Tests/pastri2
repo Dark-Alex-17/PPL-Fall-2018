@@ -1,0 +1,71 @@
+Globs p rowSize .
+
+Main -> .
+
+/* ------------------------------------ */
+Def Pastri2 row col .
+
+GetArray2d row col -> temp
+
+NotEq temp 0 -> Jmp easy:
+
+      Eq col 0 -> Jmp onEdge:
+      Eq col row -> Jmp onEdge:
+
+      Sub col 1 -> col1
+      Sub row 1 -> row1
+
+      Pastri2 row1 col1 -> temp1
+      Pastri2 row1 col -> temp2
+      Add temp1 temp2 -> result
+      PutArray2d row col result -> .
+      result -> Ret
+
+onEdge:
+      PutArray2d row col 1 -> .
+      1 -> Ret
+
+easy:
+      temp -> Ret
+
+/* ------------------------------------ */
+Def Main .
+
+Keys -> row
+Keys -> col
+
+Add row 1 -> rowsize
+Add col 1 -> colsize
+Mult rowsize colsize -> n
+New n -> Sto p
+
+colsize -> Sto rowSize
+
+Pastri2 row col -> Prt    NL
+
+Halt
+
+/* ------------------------------------ */
+Def GetArray2d r c .
+
+Fet p -> array
+Fet rowSize -> cols
+
+Mult r cols -> index
+Add c index -> index
+
+Get array index -> result
+result -> Ret
+
+/* ------------------------------------ */
+Def PutArray2d r c value .
+
+Fet p -> array
+Fet rowSize -> cols
+
+Mult r cols -> index
+Add c index -> index
+
+value -> Put array index
+
+0 -> Ret

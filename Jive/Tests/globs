@@ -1,0 +1,15 @@
+/*  unit tests, sort of,
+on global stuff
+*/
+
+Globs a b c .
+
+17 -> Sto a
+23 -> Sto b
+41 -> Sto c
+
+Fet a -> Prt NL
+Fet b -> Prt NL
+Fet c -> Prt NL
+
+Halt

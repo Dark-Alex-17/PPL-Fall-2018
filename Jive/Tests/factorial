@@ -1,0 +1,21 @@
+/* main function
+   for computing
+   factorial of
+   input value
+*/
+
+Keys -> n
+Fact n -> f
+f -> Prt   NL
+Halt
+
+Def Fact n .
+
+Less n 2 -> Jmp small:
+
+   Sub n 1 -> temp
+   Fact temp -> f
+   Mult n f -> Ret
+
+small:
+  1 -> Ret
