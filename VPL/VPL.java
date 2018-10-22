@@ -1,7 +1,5 @@
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.StringTokenizer;
+import java.io.*;
+import java.util.*;
 
 public class VPL
 {
