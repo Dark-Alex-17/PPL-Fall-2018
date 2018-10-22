@@ -1,8 +1,8 @@
 The starting materials for Project 2 are in the
-Corgi folder, and in the Documents folder
+Corgi folder, and in the Documents folder 
 (page 51 of the file implementation.pdf).
 
-The file corgiCFG.txt has the grammar, and
+The file corgiCFG.txt has the grammar, and 
 important comments, including the fact that
 Corgi now allows  /* ..... */ style comments,
 and a list of the built-in functions.
