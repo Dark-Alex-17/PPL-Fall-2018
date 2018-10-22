@@ -179,13 +179,35 @@ public class Parser {
       
    }// <factor>
 
-   //private Node parseFuncDefs() {}
+   private Node parseFuncDefs() {
+      System.out.println("-----> parsing <funcDefs>");
 
-   //private Node parseFuncDef() {}
+      Node first = parseFuncDef();
 
-   //private Node parseParams() {}
+      // look ahead to see if there are more function's
+      Token token = lex.getNextToken();
 
-   //private Node parseArgs() {}
+      if ( token.isKind("eof") ) {
+         return new Node( "stmts", first, null, null );
+      }
+      else {
+         lex.putBackToken( token );
+         Node second = parseFuncDefs();
+         return new Node( "stmts", first, second, null );
+      }
+   }
+
+   private Node parseFuncDef() {
+      System.out.println("-----> parsing <funcDef>");
+   }
+
+   private Node parseParams() {
+      System.out.println("-----> parsing <params>");
+   }
+
+   private Node parseArgs() {
+      System.out.println("-----> parsing <args>");
+   }
 
   // check whether token is correct kind and details
   private void errorCheck( Token token, String kind, String details ) {
