@@ -137,12 +137,7 @@ System.out.println("has " + number + " children");
    public void execute() {
 
       if ( kind.equals("stmts") ) {
-         if ( first != null ) {
-            first.execute();
-            if ( second != null ) {
-               second.execute();
-            }
-         }
+          // insert code here for Exercise 15
       }
 
       else if ( kind.equals("prtstr") ) {
@@ -150,8 +145,7 @@ System.out.println("has " + number + " children");
       }
       
       else if ( kind.equals("prtexp") ) {
-         double value = first.evaluate();
-         System.out.print( value );
+          // insert code here for Exercise 15
       }
       
       else if ( kind.equals("nl") ) {
@@ -159,8 +153,7 @@ System.out.println("has " + number + " children");
       }
       
       else if ( kind.equals("sto") ) {
-         double value = first.evaluate();
-         table.store( info, value );
+          // insert code here for Exercise 15
       }
       
       else {
@@ -177,25 +170,25 @@ System.out.println("has " + number + " children");
       }
 
       else if ( kind.equals("var") ) {
-         return table.retrieve( info );
+          return table.retrieve( info );
       }
 
       else if ( kind.equals("+") || kind.equals("-") ) {
-         double value1 = first.evaluate();
-         double value2 = second.evaluate();
-         if ( kind.equals("+") )
-            return value1 + value2;
-         else
-            return value1 - value2;
+          double val1 = first.evaluate();
+          double val2 = second.evaluate();
+          if (kind.equals("+"))
+              return val1 + val2;
+          else
+              return val1 - val2;
       }
 
       else if ( kind.equals("*") || kind.equals("/") ) {
-         double value1 = first.evaluate();
-         double value2 = second.evaluate();
-         if ( kind.equals("*") )
-            return value1 * value2;
-         else
-            return value1 / value2;
+          double val1 = first.evaluate();
+          double val2 = second.evaluate();
+          if (kind.equals("*"))
+              return val1 * val2;
+          else
+              return val1 / val2;
        }
  
        else if ( kind.equals("input") ) {
@@ -219,25 +212,24 @@ System.out.println("has " + number + " children");
              error("unknown function name [" + kind + "]");
              return 0;
           }
-            
        }
        
        else if ( kind.equals("pow") ) {
-          double value1 = first.evaluate();
-          double value2 = second.evaluate();
-          return Math.pow( value1, value2 );
+           double val1 = first.evaluate();
+           double val2 = second.evaluate();
+           return Math.pow(val1, val2);
        }
 
        else if ( kind.equals("opp") ) {
-          double value = first.evaluate();
-          return -value;
+           double val = first.evaluate();
+           return -val;
        }
 
        else {
           error("Unknown node kind [" + kind + "]");
           return 0;
        }
-       
+
    }// evaluate
 
 }// Node
