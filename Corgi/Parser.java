@@ -126,51 +126,27 @@ public class Parser {
       if ( token.isKind("num") ) {
          return new Node("num", token.getDetails(), null, null, null );
       }
+
       else if ( token.isKind("var") ) {
          return new Node("var", token.getDetails(), null, null, null );
       }
+
       else if ( token.matches("single","(") ) {
          Node first = parseExpr();
          token = lex.getNextToken();
          errorCheck( token, "single", ")" );
          return first;
       }
-      else if ( token.isKind("bif0") ) {
-         String bifName = token.getDetails();
-         token = lex.getNextToken();
-         errorCheck( token, "single", "(" );
-         token = lex.getNextToken();
-         errorCheck( token, "single", ")" );
-         
-         return new Node( bifName, null, null, null );
-      }
-      else if ( token.isKind("bif1") ) {
-         String bifName = token.getDetails();
-         token = lex.getNextToken();
-         errorCheck( token, "single", "(" );
-         Node first = parseExpr();
-         token = lex.getNextToken();
-         errorCheck( token, "single", ")" );
-         
-         return new Node( bifName, first, null, null );
-      }
-      else if ( token.isKind("bif2") ) {
-         String bifName = token.getDetails();
-         token = lex.getNextToken();
-         errorCheck( token, "single", "(" );
-         Node first = parseExpr();
-         token = lex.getNextToken();
-         errorCheck( token, "single", "," );
-         Node second = parseExpr();
-         token = lex.getNextToken();
-         errorCheck( token, "single", ")" );
-         
-         return new Node( bifName, first, second, null );
-      }
+            
       else if ( token.matches("single","-") ) {
          Node first = parseFactor();
          return new Node("opp", first, null, null );
       }
+
+      else if (token.isKind("funcCall")) {
+         return new Node("funcCall", token.getDetails(), null, null, null);
+      }
+
       else {
          System.out.println("Can't have factor starting with " + token );
          System.exit(1);
