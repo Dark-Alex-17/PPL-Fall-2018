@@ -179,14 +179,13 @@ public class Parser {
       
    }// <factor>
 
-  // check whether token is correct kind
-  private void errorCheck( Token token, String kind ) {
-    if( ! token.isKind( kind ) ) {
-      System.out.println("Error:  expected " + token + 
-                         " to be of kind " + kind );
-      System.exit(1);
-    }
-  }
+   //private Node parseFuncDefs() {}
+
+   //private Node parseFuncDef() {}
+
+   //private Node parseParams() {}
+
+   //private Node parseArgs() {}
 
   // check whether token is correct kind and details
   private void errorCheck( Token token, String kind, String details ) {

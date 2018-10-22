@@ -50,8 +50,7 @@ public class Lexer {
 // System.out.println("current symbol: " + sym + " state = " + state );
 
             if ( state == 1 ) {
-               if ( sym == 9 || sym == 10 || sym == 13 ||
-                    sym == 32 ) {// whitespace
+               if ( sym == 9 || sym == 10 || sym == 13 || sym == 32 ) {// whitespace
                   state = 1;
                }
                else if ( 'a'<=sym && sym<='z' ) {// lowercase
