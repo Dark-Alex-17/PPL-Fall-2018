@@ -137,7 +137,12 @@ System.out.println("has " + number + " children");
    public void execute() {
 
       if ( kind.equals("stmts") ) {
-          // insert code here for Exercise 15
+         if ( first != null ) {
+            first.execute();
+            if ( second != null ) {
+               second.execute();
+            }
+         }
       }
 
       else if ( kind.equals("prtstr") ) {
@@ -145,7 +150,8 @@ System.out.println("has " + number + " children");
       }
       
       else if ( kind.equals("prtexp") ) {
-          // insert code here for Exercise 15
+         double value = first.evaluate();
+         System.out.print( value );
       }
       
       else if ( kind.equals("nl") ) {
@@ -153,7 +159,8 @@ System.out.println("has " + number + " children");
       }
       
       else if ( kind.equals("sto") ) {
-          // insert code here for Exercise 15
+         double value = first.evaluate();
+         table.store( info, value );
       }
       
       else {
@@ -170,15 +177,25 @@ System.out.println("has " + number + " children");
       }
 
       else if ( kind.equals("var") ) {
-          // insert code here for Exercise 15
+         return table.retrieve( info );
       }
 
       else if ( kind.equals("+") || kind.equals("-") ) {
-          // insert code here for Exercise 15
+         double value1 = first.evaluate();
+         double value2 = second.evaluate();
+         if ( kind.equals("+") )
+            return value1 + value2;
+         else
+            return value1 - value2;
       }
 
       else if ( kind.equals("*") || kind.equals("/") ) {
-          // insert code here for Exercise 15
+         double value1 = first.evaluate();
+         double value2 = second.evaluate();
+         if ( kind.equals("*") )
+            return value1 * value2;
+         else
+            return value1 / value2;
        }
  
        else if ( kind.equals("input") ) {
@@ -206,11 +223,14 @@ System.out.println("has " + number + " children");
        }
        
        else if ( kind.equals("pow") ) {
-          // insert code here for Exercise 15
+          double value1 = first.evaluate();
+          double value2 = second.evaluate();
+          return Math.pow( value1, value2 );
        }
 
        else if ( kind.equals("opp") ) {
-          // insert code here for Exercise 15
+          double value = first.evaluate();
+          return -value;
        }
 
        else {
