@@ -173,9 +173,12 @@ public class Lexer {
             else if ( data.equals("newline") ) {
                return new Token( "newline", "" );
             }
-            else {// is just a variable
-               return new Token( "var", data );
+            else if ( data.equals("def")) {
+               return new Token( "funcDec", data );
             }
+            else {// Lexer error
+                error("somehow Lexer FA halted in bad state " + state );
+                return null;
          }
          else if ( state == 3 || state == 4 ) {
             return new Token( "num", data );
