@@ -155,6 +155,10 @@ public class Parser {
       
    }// <factor>
 
+/*
+
+<funcDefs> -> <funcDef> | <funcDef> <funcDefs>
+
    private Node parseFuncDefs() {
       System.out.println("-----> parsing <funcDefs>");
 
@@ -169,7 +173,7 @@ public class Parser {
       else {
          lex.putBackToken( token );
          Node second = parseFuncDefs();
-         return new Node( "stmts", first, second, null );
+         return new Node( "FuncDef", first, second, null );
       }
    }
 
@@ -184,6 +188,7 @@ public class Parser {
    private Node parseArgs() {
       System.out.println("-----> parsing <args>");
    }
+*/
 
   // check whether token is correct kind and details
   private void errorCheck( Token token, String kind, String details ) {
