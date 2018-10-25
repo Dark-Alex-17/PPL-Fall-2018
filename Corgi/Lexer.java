@@ -129,7 +129,7 @@ public class Lexer {
 
            // generate token depending on stopping state
            Token token;
-
+//TODO
            if (state == 2) {
                // see if data matches any special words
                if (data.equals("input")) {
