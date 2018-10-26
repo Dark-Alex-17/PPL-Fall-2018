@@ -54,8 +54,21 @@ public class Parser {
 
    //TODO
    private Node parseParams() {
-      System.out.println("-----> parsing <params>");
-      return new Node(null);
+       System.out.println("-----> parsing <params>");
+       Token token = lex.getNextToken();
+
+       if(token.isKind("eof")) {
+           String varName = token.getDetails();
+           return new Node("params", varName, null,null,null);
+       }
+
+       else {
+           String varName = token.getDetails();
+           token = lex.getNextToken();
+           errorCheck(token, "single", ",");
+           Node first = parseParams();
+           return new Node("params", varName, first, null, null);
+       }
    }
 
    private Node parseStatements() {
@@ -78,13 +91,43 @@ public class Parser {
 
    //TODO
    private Node parseFuncCall() {
-       return new Node(null);
+       System.out.println("-------> parsing <funcCall>:");
+       Token token = lex.getNextToken();
+
+       if(token.isKind("var")) {
+            token = lex.getNextToken();
+            errorCheck( token, "single", "(" );
+            token = lex.getNextToken();
+            errorCheck( token, "single", ")" );
+
+           return new Node(token.getDetails(), null, null, null);
+       }
+
+       else {
+            token = lex.getNextToken();
+            errorCheck(token,"single", "(");
+            Node first = parseArgs();
+            token = lex.getNextToken();
+            errorCheck(token, "single", ")");
+
+            return new Node(token.getDetails(), first, null, null);
+       }
    }
 
    //TODO
    private Node parseArgs() {
-      System.out.println("-----> parsing <args>");
-      return new Node(null);
+       System.out.println("-----> parsing <args>:");
+       Node first = parseExpr();
+       Token token = lex.getNextToken();
+
+       if(token.matches("single", ",")) {
+           Node second = parseArgs();
+           return new Node(token.getDetails(), first, second, null);
+       }
+       else {
+           lex.putBackToken(token);
+           return first;
+       }
    }
 
    //TODO
