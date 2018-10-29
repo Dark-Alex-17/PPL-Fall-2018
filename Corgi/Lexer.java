@@ -199,6 +199,9 @@ public class Lexer {
                else if (data.equals("def")) {
                    return new Token("funcDef", data);
                }
+               else if (data.equals("end")) {
+                   return new Token("end","");
+               }
                else {// Lexer error
                    error("somehow Lexer FA halted in bad state " + state);
                    return null;
