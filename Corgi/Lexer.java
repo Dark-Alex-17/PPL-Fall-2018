@@ -51,74 +51,121 @@ public class Lexer {
                if (state == 1) {
                    if (sym == 9 || sym == 10 || sym == 13 || sym == 32) {// whitespace
                        state = 1;
-                   } else if ('a' <= sym && sym <= 'z') {// lowercase
+                   }
+                   else if ('a' <= sym && sym <= 'z') {// lowercase
                        data += (char) sym;
                        state = 2;
-                   } else if (digit(sym)) {
+                   }
+                   else if (digit(sym)) {
                        data += (char) sym;
                        state = 3;
-                   } else if (sym == '.') {
+                   }
+                   else if (sym == '.') {
                        data += (char) sym;
                        state = 5;
-                   } else if (sym == '\"') {
+                   }
+                   else if (sym == '\"') {
                        state = 6;
-                   } else if (sym == '+' || sym == '-' || sym == '*' ||
-                           sym == '/' || sym == '(' || sym == ')' ||
-                           sym == ',' || sym == '='
+                   }
+                   else if (sym == '+' || sym == '-' || sym == '*' ||
+                           sym == '(' || sym == ')' || sym == ',' ||
+                           sym == '='
                    ) {
                        data += (char) sym;
                        state = 8;
                        done = true;
-                   } else if (sym == -1) {// end of file
+                   }
+                   else if (sym == '/') {
+                     int sym1 = getNextSymbol();
+                     if (sym1 == '*') {
+                         state = 10;
+                     }
+                     else {
+                         data += (char) sym1;
+                         putBackSymbol(sym1);
+                         state = 8;
+                         done = true;
+                     }
+                   }
+                   else if (sym == -1) {// end of file
                        state = 9;
                        done = true;
-                   } else {
+                   }
+                   else {
                        error("Error in lexical analysis phase with symbol "
                                + sym + " in state " + state);
                    }
-               } else if (state == 2) {
+               }
+               else if (state == 2) {
                    if (letter(sym) || digit(sym)) {
                        data += (char) sym;
                        state = 2;
-                   } else {// done with variable token
+                   }
+                   else {// done with variable token
                        putBackSymbol(sym);
                        done = true;
                    }
-               } else if (state == 3) {
+               }
+               else if (state == 3) {
                    if (digit(sym)) {
                        data += (char) sym;
                        state = 3;
-                   } else if (sym == '.') {
+                   }
+                   else if (sym == '.') {
                        data += (char) sym;
                        state = 4;
-                   } else {// done with number token
+                   }
+                   else {// done with number token
                        putBackSymbol(sym);
                        done = true;
                    }
 
-               } else if (state == 4) {
+               }
+               else if (state == 4) {
                    if (digit(sym)) {
                        data += (char) sym;
                        state = 4;
-                   } else {// done with number token
+                   }
+                   else {// done with number token
                        putBackSymbol(sym);
                        done = true;
                    }
-               } else if (state == 5) {
+               }
+               else if (state == 5) {
                    if (digit(sym)) {
                        data += (char) sym;
                        state = 4;
-                   } else {
+                   }
+                   else {
                        error("Error in lexical analysis phase with symbol "
                                + sym + " in state " + state);
                    }
-               } else if (state == 6) {
+               }
+               else if (state == 6) {
                    if ((' ' <= sym && sym <= '~') && sym != '\"') {
                        data += (char) sym;
                        state = 6;
-                   } else if (sym == '\"') {
+                   }
+                   else if (sym == '\"') {
                        state = 7;
                        done = true;
+                   }
+               }
+               else if (state == 10) {
+                   if (sym == '*') {
+                       int sym1 = getNextSymbol();
+                       if (sym1 == '/') {
+                           state = 11;
+                           done = true;
+                       }
+                       else {
+                           putBackSymbol(sym1);
+                           state = 10;
+                       }
+                   }
+                   else {
+                       data += (char)sym;
+                       state = 10;
                    }
                }
 
@@ -129,37 +176,50 @@ public class Lexer {
 
            // generate token depending on stopping state
            Token token;
-
+//TODO
            if (state == 2) {
                // see if data matches any special words
                if (data.equals("input")) {
                    return new Token("bif0", data);
-               } else if (data.equals("sqrt") || data.equals("cos") ||
+               }
+               else if (data.equals("sqrt") || data.equals("cos") ||
                        data.equals("sin") || data.equals("atan")
                ) {
                    return new Token("bif1", data);
-               } else if (data.equals("pow")) {
+               }
+               else if (data.equals("pow")) {
                    return new Token("bif2", data);
-               } else if (data.equals("print")) {
+               }
+               else if (data.equals("print")) {
                    return new Token("print", "");
-               } else if (data.equals("newline")) {
+               }
+               else if (data.equals("newline")) {
                    return new Token("newline", "");
-               } else if (data.equals("def")) {
+               }
+               else if (data.equals("def")) {
                    return new Token("funcDef", data);
-               } else {// Lexer error
+               }
+               else {// Lexer error
                    error("somehow Lexer FA halted in bad state " + state);
                    return null;
                }
            }
            else if (state == 3 || state == 4) {
                    return new Token("num", data);
-               } else if (state == 7) {
+               }
+               else if (state == 7) {
                    return new Token("string", data);
-               } else if (state == 8) {
+               }
+               else if (state == 8) {
                    return new Token("single", data);
-               } else if (state == 9) {
+               }
+               else if (state == 9) {
                    return new Token("eof", data);
-               } else {// Lexer error
+               }
+               else if (state == 11) {
+                    return new Token("comment", data);
+           }
+           else {// Lexer error
                    error("somehow Lexer FA halted in bad state " + state);
                    return null;
                }
