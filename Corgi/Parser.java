@@ -95,11 +95,12 @@ public class Parser {
 
                 return new Node(token.getDetails(), first, null, null);
             }
+            errorCheck(token, "single", ")");
+
+            return new Node(token.getDetails(), null, null, null);
         }
-
-        errorCheck(token, "single", ")");
-
-        return new Node(token.getDetails(), null, null, null);
+        System.err.println("This is an error in parseFuncCall");
+        return null; //This is an error
     }
 
     private Node parseArgs() {
@@ -280,7 +281,6 @@ public class Parser {
             }
         }
     }
-
     // check whether token is correct kind and details
     private void errorCheck( Token token, String kind, String details ) {
         if( ! token.isKind( kind ) ||
