@@ -47,12 +47,6 @@ public class Parser {
    }
 
    //TODO
-   private Node parseFuncDef() {
-      System.out.println("-----> parsing <funcDef>");
-      return new Node(null);
-   }
-
-   //TODO
    private Node parseParams() {
        System.out.println("-----> parsing <params>");
        Node first = parseParams();
@@ -252,23 +246,6 @@ public class Parser {
 
 //<funcDefs> -> <funcDef> | <funcDef> <funcDefs>
 
-   private Node parseFuncDefs() {
-      System.out.println("-----> parsing <funcDefs>");
-
-      Node first = parseFuncDef();
-
-      // look ahead to see if there are more function's
-      Token token = lex.getNextToken();
-
-      if ( token.isKind("eof") ) {
-         return new Node( "funcDefs", first, null, null );
-      }
-      else {
-         lex.putBackToken( token );
-         Node second = parseFuncDefs();
-         return new Node( "funcDef", first, second, null );
-      }
-   }
    private Node parseFuncDef() {
       System.out.println("-----> parsing <funcDef>:");
       Token token = lex.getNextToken();
@@ -308,17 +285,6 @@ public class Parser {
             return new Node("funcDef", funcName, first, second, null);
          }
       }
-   }
-//TODO
-   private Node parseParams() {
-      System.out.println("-----> parsing <params>");
-      return new Node(null);
-
-   }
-//TODO
-   private Node parseArgs() {
-      System.out.println("-----> parsing <args>");
-       return new Node(null);
    }
 
   // check whether token is correct kind and details
