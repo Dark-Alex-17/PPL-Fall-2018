@@ -249,6 +249,78 @@ public class Parser {
       
    }// <factor>
 
+
+//<funcDefs> -> <funcDef> | <funcDef> <funcDefs>
+
+   private Node parseFuncDefs() {
+      System.out.println("-----> parsing <funcDefs>");
+
+      Node first = parseFuncDef();
+
+      // look ahead to see if there are more function's
+      Token token = lex.getNextToken();
+
+      if ( token.isKind("eof") ) {
+         return new Node( "funcDefs", first, null, null );
+      }
+      else {
+         lex.putBackToken( token );
+         Node second = parseFuncDefs();
+         return new Node( "funcDef", first, second, null );
+      }
+   }
+   private Node parseFuncDef() {
+      System.out.println("-----> parsing <funcDef>:");
+      Token token = lex.getNextToken();
+      errorCheck( token, "var", "def" );
+      token = lex.getNextToken();
+      String funcName = token.getDetails();
+      token = lex.getNextToken();
+      errorCheck( token, "single", "(" );
+      token = lex.getNextToken();
+      //<params> not part of it
+      if(token.matches("single",")")){
+         token = lex.getNextToken();
+         //<stmts> not part it
+         if(token.getDetails() == "end"){
+            return new Node("funcDef", funcName, null, null, null);
+         }
+         //<stmts> is part of it
+         else{
+            lex.putBackToken(token);
+            Node second = parseStatements();
+            return new Node("funcDef", funcName, null, second, null);
+         }
+      }
+      //<params> is part of it
+      else{
+         lex.putBackToken(token);
+         Node first = parseParams();
+         token = lex.getNextToken();
+         //<stmts> not part of it
+         if(token.getDetails() == "end"){
+            return new Node("funcDef", funcName, first, null, null);
+         }
+         //<stmts> is part of it
+         else{
+            lex.putBackToken(token);
+            Node second = parseStatements();
+            return new Node("funcDef", funcName, first, second, null);
+         }
+      }
+   }
+//TODO
+   private Node parseParams() {
+      System.out.println("-----> parsing <params>");
+      return new Node(null);
+
+   }
+//TODO
+   private Node parseArgs() {
+      System.out.println("-----> parsing <args>");
+       return new Node(null);
+   }
+
   // check whether token is correct kind and details
   private void errorCheck( Token token, String kind, String details ) {
     if( ! token.isKind( kind ) || 
