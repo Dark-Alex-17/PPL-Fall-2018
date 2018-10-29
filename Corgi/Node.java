@@ -17,7 +17,7 @@ public class Node {
                         // the actual identifier for an I
 
   // references to children in the parse tree
-  private Node first, second, third; 
+  private Node first, second, third;
 
   // memory table shared by all nodes
   private static MemTable table = new MemTable();
@@ -26,7 +26,7 @@ public class Node {
 
   // construct a common node with no info specified
   public Node( String k, Node one, Node two, Node three ) {
-    kind = k;  info = "";  
+    kind = k;  info = "";
     first = one;  second = two;  third = three;
     id = count;
     count++;
@@ -35,7 +35,7 @@ public class Node {
 
   // construct a node with specified info
   public Node( String k, String inf, Node one, Node two, Node three ) {
-    kind = k;  info = inf;  
+    kind = k;  info = inf;
     first = one;  second = two;  third = three;
     id = count;
     count++;
@@ -44,7 +44,7 @@ public class Node {
 
   // construct a node that is essentially a token
   public Node( Token token ) {
-    kind = token.getKind();  info = token.getDetails();  
+    kind = token.getKind();  info = token.getDetails();
     first = null;  second = null;  third = null;
     id = count;
     count++;
@@ -52,7 +52,7 @@ public class Node {
   }
 
   public String toString() {
-    return "#" + id + "[" + kind + "," + info + "]<" + nice(first) + 
+    return "#" + id + "[" + kind + "," + info + "]<" + nice(first) +
               " " + nice(second) + ">";
   }
 
@@ -145,7 +145,7 @@ System.out.println("has " + number + " children");
       else if ( kind.equals("prtstr") ) {
          System.out.print( info );
       }
-      
+
       else if ( kind.equals("prtexp") ) {
           double value = first.evaluate();
           if (value % 1 == 0) {
@@ -154,21 +154,56 @@ System.out.println("has " + number + " children");
               System.out.print(value);
           }
       }
-      
+
       else if ( kind.equals("nl") ) {
          System.out.print( "\n" );
       }
-      
+
       else if ( kind.equals("sto") ) {
-          // insert code here for Exercise 15
+          double val = first.evaluate();
+          table.store(info, val);
       }
-      
+
+      else if (kind.equals("lt")) {
+          double val = first.evaluate();
+          table.store(info, val);
+      }
+
+      else if (kind.equals("le")) {
+          double val = first.evaluate();
+          table.store(info, val);
+      }
+
+      else if (kind.equals("eq")) {
+          double val = first.evaluate();
+          table.store(info, val);
+      }
+
+      else if (kind.equals("ne")) {
+          double val = first.evaluate();
+          table.store(info, val);
+      }
+
+      else if (kind.equals("or")) {
+          double val = first.evaluate();
+          table.store(info, val);
+      }
+
+      else if (kind.equals("and")) {
+          double val = first.evaluate();
+          table.store(info, val);
+      }
+
+      else if (kind.equals("not")) {
+          double val = first.evaluate();
+          table.store(info, val);
+      }
       else {
-         error("Unknown kind of node [" + kind + "]");     
+         error("Unknown kind of node [" + kind + "]");
       }
 
    }// execute
-    
+
    // compute and return value produced by this node
    public double evaluate() {
 
@@ -197,13 +232,13 @@ System.out.println("has " + number + " children");
           else
               return val1 / val2;
        }
- 
+
        else if ( kind.equals("input") ) {
-          return keys.nextDouble();          
+          return keys.nextDouble();
        }
-       
+
        else if ( kind.equals("sqrt") || kind.equals("cos") ||
-                 kind.equals("sin") || kind.equals("atan")    
+                 kind.equals("sin") || kind.equals("atan")
                ) {
           double value = first.evaluate();
 
@@ -220,7 +255,7 @@ System.out.println("has " + number + " children");
              return 0;
           }
        }
-       
+
        else if ( kind.equals("pow") ) {
            double val1 = first.evaluate();
            double val2 = second.evaluate();
@@ -232,11 +267,67 @@ System.out.println("has " + number + " children");
            return -val;
        }
 
+       else if (kind.equals("lt")) {
+           double val1 = first.evaluate();
+           double val2 = second.evaluate();
+           if (val1 < val2) {
+               return 1;
+           }
+           else return 0;
+      }
+//TODO
+      else if (kind.equals("le")) {
+          double val1 = first.evaluate();
+          double val2 = second.evaluate();
+          return Double.parseDouble(null);
+
+      }
+//TODO
+      else if (kind.equals("eq")) {
+          double val1 = first.evaluate();
+          double val2 = second.evaluate();
+          return Double.parseDouble(null);
+
+      }
+//TODO
+      else if (kind.equals("ne")) {
+          double val1 = first.evaluate();
+          double val2 = second.evaluate();
+          return Double.parseDouble(null);
+      }
+
+      else if (kind.equals("or")) {
+          double val1 = first.evaluate();
+          double val2 = second.evaluate();
+          if (val1 != 0 || val2 != 0) {
+              return 1;
+          }
+          else return 0;
+      }
+
+      else if (kind.equals("and")) {
+          double val1 = first.evaluate();
+          double val2 = second.evaluate();
+          if (val1 != 0 && val2 !=0) {
+              return 1;
+          }
+          else return 0;
+      }
+
+      else if (kind.equals("not")) {
+          double val1 = first.evaluate();
+          if (val1 == 0) {
+              return 1;
+          }
+          else return 0;
+      }
+
        else {
           error("Unknown node kind [" + kind + "]");
           return 0;
        }
 
-   }// evaluate
+   }
+   // evaluate
 
 }// Node
