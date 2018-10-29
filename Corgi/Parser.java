@@ -55,21 +55,19 @@ public class Parser {
    //TODO
    private Node parseParams() {
        System.out.println("-----> parsing <params>");
+       Node first = parseParams();
        Token token = lex.getNextToken();
 
-       if(token.isKind("eof")) {
-           String varName = token.getDetails();
-           return new Node("params", varName, null,null,null);
+       if(token.matches("single", ",")) {
+           return new Node(token.getDetails(),first,null,null);
        }
 
        else {
-           String varName = token.getDetails();
-           token = lex.getNextToken();
-           errorCheck(token, "single", ",");
-           Node first = parseParams();
-           return new Node("params", varName, first, null, null);
+           lex.putBackToken(token);
+           return first;
        }
    }
+
 
    private Node parseStatements() {
       System.out.println("-----> parsing <statements>:");
