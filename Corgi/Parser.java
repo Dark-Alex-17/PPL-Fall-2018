@@ -49,16 +49,16 @@ public class Parser {
     //TODO
     private Node parseParams() {
         System.out.println("-----> parsing <params>");
-        Node first = parseParams();
         Token token = lex.getNextToken();
 
         if(token.matches("single", ",")) {
+            Node first = parseParams();
             return new Node(token.getDetails(),first,null,null);
         }
 
         else {
             lex.putBackToken(token);
-            return first;
+            return new Node("var",token.getDetails(),null,null,null);
         }
     }
 
