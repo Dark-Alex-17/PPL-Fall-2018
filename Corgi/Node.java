@@ -137,7 +137,9 @@ System.out.println("has " + number + " children");
    public void execute() {
 
       if ( kind.equals("stmts") ) {
-          // insert code here for Exercise 15
+          if (first != null) {
+              first.execute();
+          }
       }
 
       else if ( kind.equals("prtstr") ) {
@@ -145,7 +147,12 @@ System.out.println("has " + number + " children");
       }
       
       else if ( kind.equals("prtexp") ) {
-          // insert code here for Exercise 15
+          double value = first.evaluate();
+          if (value % 1 == 0) {
+              System.out.print((int)value);
+          } else {
+              System.out.print(value);
+          }
       }
       
       else if ( kind.equals("nl") ) {
