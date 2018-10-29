@@ -197,7 +197,7 @@ public class Lexer {
                    return new Token("newline", "");
                }
                else if (data.equals("def")) {
-                   return new Token("funcDef", data);
+                   return new Token("funcDef", "");
                } else if (data.equals("end")) {
                    return new Token("end", "");
                } else if (data.equals("if")) {
