@@ -46,7 +46,47 @@ public class Parser {
         }
     }
 
-    //TODO
+    private Node parseFuncDef() {
+        System.out.println("-----> parsing <funcDef>:");
+        Token token = lex.getNextToken();
+        errorCheck( token, "var", "def" );
+        token = lex.getNextToken();
+        String funcName = token.getDetails();
+        token = lex.getNextToken();
+        errorCheck( token, "single", "(" );
+        token = lex.getNextToken();
+        //<params> not part of it
+        if(token.matches("single",")")){
+            token = lex.getNextToken();
+            //<stmts> not part it
+            if(token.getDetails() == "end"){
+                return new Node("funcDef", funcName, null, null, null);
+            }
+            //<stmts> is part of it
+            else{
+                lex.putBackToken(token);
+                Node second = parseStatements();
+                return new Node("funcDef", funcName, null, second, null);
+            }
+        }
+        //<params> is part of it
+        else{
+            lex.putBackToken(token);
+            Node first = parseParams();
+            token = lex.getNextToken();
+            //<stmts> not part of it
+            if(token.getDetails() == "end"){
+                return new Node("funcDef", funcName, first, null, null);
+            }
+            //<stmts> is part of it
+            else{
+                lex.putBackToken(token);
+                Node second = parseStatements();
+                return new Node("funcDef", funcName, first, second, null);
+            }
+        }
+    }
+
     private Node parseParams() {
         System.out.println("-----> parsing <params>");
         Token token = lex.getNextToken();
@@ -100,7 +140,6 @@ public class Parser {
         }
 
         errorCheck(token, "single", ")");
-
         return new Node(token.getDetails(), null, null, null);
     }
 
@@ -240,50 +279,6 @@ public class Parser {
         }
 
     }// <factor>
-
-
-//<funcDefs> -> <funcDef> | <funcDef> <funcDefs>
-
-    private Node parseFuncDef() {
-        System.out.println("-----> parsing <funcDef>:");
-        Token token = lex.getNextToken();
-        errorCheck( token, "var", "def" );
-        token = lex.getNextToken();
-        String funcName = token.getDetails();
-        token = lex.getNextToken();
-        errorCheck( token, "single", "(" );
-        token = lex.getNextToken();
-        //<params> not part of it
-        if(token.matches("single",")")){
-            token = lex.getNextToken();
-            //<stmts> not part it
-            if(token.getDetails() == "end"){
-                return new Node("funcDef", funcName, null, null, null);
-            }
-            //<stmts> is part of it
-            else{
-                lex.putBackToken(token);
-                Node second = parseStatements();
-                return new Node("funcDef", funcName, null, second, null);
-            }
-        }
-        //<params> is part of it
-        else{
-            lex.putBackToken(token);
-            Node first = parseParams();
-            token = lex.getNextToken();
-            //<stmts> not part of it
-            if(token.getDetails() == "end"){
-                return new Node("funcDef", funcName, first, null, null);
-            }
-            //<stmts> is part of it
-            else{
-                lex.putBackToken(token);
-                Node second = parseStatements();
-                return new Node("funcDef", funcName, first, second, null);
-            }
-        }
-    }
 
     // check whether token is correct kind and details
     private void errorCheck( Token token, String kind, String details ) {
