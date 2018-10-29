@@ -86,6 +86,7 @@ public class Parser {
             }
         }
     }
+    //TODO
 
     private Node parseParams() {
         System.out.println("-----> parsing <params>");
@@ -120,8 +121,8 @@ public class Parser {
             return new Node( "stmts", first, second, null );
         }
     }// <statements>
-
     //TODO
+
     private Node parseFuncCall() {
         System.out.println("-------> parsing <funcCall>:");
         Token token = lex.getNextToken();
@@ -137,13 +138,15 @@ public class Parser {
 
                 return new Node(token.getDetails(), first, null, null);
             }
+            errorCheck(token, "single", ")");
+
+            return new Node(token.getDetails(), null, null, null);
         }
-
-        errorCheck(token, "single", ")");
-        return new Node(token.getDetails(), null, null, null);
+        System.err.println("This is an error in parseFuncCall");
+        return null; //This is an error
     }
-
     //TODO
+
     private Node parseArgs() {
         System.out.println("-----> parsing <args>:");
         Node first = parseExpr();
@@ -158,8 +161,8 @@ public class Parser {
             return new Node(token.getDetails(), first, null, null);
         }
     }
-
     //TODO
+
     private Node parseStatement() {
         System.out.println("-----> parsing <statement>:");
 
@@ -279,6 +282,9 @@ public class Parser {
         }
 
     }// <factor>
+
+
+//<funcDefs> -> <funcDef> | <funcDef> <funcDefs>
 
     // check whether token is correct kind and details
     private void errorCheck( Token token, String kind, String details ) {
