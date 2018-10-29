@@ -46,7 +46,6 @@ public class Parser {
         }
     }
 
-    //TODO
     private Node parseParams() {
         System.out.println("-----> parsing <params>");
         Token token = lex.getNextToken();
@@ -81,7 +80,6 @@ public class Parser {
         }
     }// <statements>
 
-    //TODO
     private Node parseFuncCall() {
         System.out.println("-------> parsing <funcCall>:");
         Token token = lex.getNextToken();
@@ -104,7 +102,6 @@ public class Parser {
         return new Node(token.getDetails(), null, null, null);
     }
 
-    //TODO
     private Node parseArgs() {
         System.out.println("-----> parsing <args>:");
         Node first = parseExpr();
@@ -120,7 +117,6 @@ public class Parser {
         }
     }
 
-    //TODO
     private Node parseStatement() {
         System.out.println("-----> parsing <statement>:");
 
@@ -257,7 +253,7 @@ public class Parser {
         if(token.matches("single",")")){
             token = lex.getNextToken();
             //<stmts> not part it
-            if(token.getDetails() == "end"){
+            if(token.getDetails().equals("end")){
                 return new Node("funcDef", funcName, null, null, null);
             }
             //<stmts> is part of it
@@ -273,7 +269,7 @@ public class Parser {
             Node first = parseParams();
             token = lex.getNextToken();
             //<stmts> not part of it
-            if(token.getDetails() == "end"){
+            if(token.getDetails().equals("end")){
                 return new Node("funcDef", funcName, first, null, null);
             }
             //<stmts> is part of it
