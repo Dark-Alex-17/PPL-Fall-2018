@@ -176,10 +176,45 @@ public class Parser {
          return new Node( "funcDef", first, second, null );
       }
    }
-//TODO
    private Node parseFuncDef() {
-      System.out.println("-----> parsing <funcDef>");
-      return new Node(null);
+      System.out.println("-----> parsing <funcDef>:");
+      Token token = lex.getNextToken();
+      errorCheck( token, "var", "def" );
+      token = lex.getNextToken();
+      String funcName = token.getDetails();
+      token = lex.getNextToken();
+      errorCheck( token, "single", "(" );
+      token = lex.getNextToken();
+      //<params> not part of it
+      if(token.matches("single",")")){
+         token = lex.getNextToken();
+         //<stmts> not part it
+         if(token.getDetails() == "end"){
+            return new Node("funcDef", funcName, null, null, null);
+         }
+         //<stmts> is part of it
+         else{
+            lex.putBackToken(token);
+            Node second = parseStatements();
+            return new Node("funcDef", funcName, null, second, null);
+         }
+      }
+      //<params> is part of it
+      else{
+         lex.putBackToken(token);
+         Node first = parseParams();
+         token = lex.getNextToken();
+         //<stmts> not part of it
+         if(token.getDetails() == "end"){
+            return new Node("funcDef", funcName, first, null, null);
+         }
+         //<stmts> is part of it
+         else{
+            lex.putBackToken(token);
+            Node second = parseStatements();
+            return new Node("funcDef", funcName, first, second, null);
+         }
+      }
    }
 //TODO
    private Node parseParams() {
