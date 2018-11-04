@@ -183,11 +183,16 @@ public class Lexer {
                    return new Token("bif0", data);
                }
                else if (data.equals("sqrt") || data.equals("cos") ||
-                       data.equals("sin") || data.equals("atan")
+                       data.equals("sin") || data.equals("atan") ||
+                       data.equals("trunc") || data.equals("round") ||
+                       data.equals("print") || data.equals("not")
                ) {
                    return new Token("bif1", data);
                }
-               else if (data.equals("pow")) {
+               else if (data.equals("pow") || data.equals("lt") ||
+                        data.equals("le") || data.equals("eq") ||
+                        data.equals("ne") || data.equals("or") ||
+                        data.equals("and")) {
                    return new Token("bif2", data);
                }
                else if (data.equals("print")) {
@@ -198,11 +203,14 @@ public class Lexer {
                }
                else if (data.equals("def")) {
                    return new Token("funcDef", "");
-               } else if (data.equals("end")) {
+               }
+               else if (data.equals("end")) {
                    return new Token("end", "");
-               } else if (data.equals("if")) {
+               }
+               else if (data.equals("if")) {
                    return new Token("else", "");
-               } else if (data.equals("return")) {
+               }
+               else if (data.equals("return")) {
                    return new Token("return", "");
                }
                else {// Lexer error
@@ -211,28 +219,28 @@ public class Lexer {
                }
            }
            else if (state == 3 || state == 4) {
-                   return new Token("num", data);
+               return new Token("num", data);
                }
-               else if (state == 7) {
-                   return new Token("string", data);
+           else if (state == 7) {
+               return new Token("string", data);
                }
-               else if (state == 8) {
-                   return new Token("single", data);
+           else if (state == 8) {
+               return new Token("single", data);
                }
-               else if (state == 9) {
-                   return new Token("eof", data);
+           else if (state == 9) {
+               return new Token("eof", data);
                }
-               else if (state == 11) {
-                    return new Token("comment", data);
+           else if (state == 11) {
+               return new Token("comment", data);
            }
            else {// Lexer error
                    error("somehow Lexer FA halted in bad state " + state);
                    return null;
-               }
+           }
 
-           }// else generate token from input
+       }// else generate token from input
 
-       } // getNext
+   } // getNext
 
        public Token getNextToken () {
            Token token = getNext();

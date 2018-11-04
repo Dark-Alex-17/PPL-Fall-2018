@@ -233,13 +233,12 @@ System.out.println("has " + number + " children");
               return val1 / val2;
        }
 
-       else if ( kind.equals("input") ) {
+      else if ( kind.equals("input") ) {
           return keys.nextDouble();
-       }
+      }
 
-       else if ( kind.equals("sqrt") || kind.equals("cos") ||
-                 kind.equals("sin") || kind.equals("atan")
-               ) {
+      else if ( kind.equals("sqrt") || kind.equals("cos") ||
+                kind.equals("sin") || kind.equals("atan")) {
           double value = first.evaluate();
 
           if ( kind.equals("sqrt") )
@@ -256,44 +255,43 @@ System.out.println("has " + number + " children");
           }
        }
 
-       else if ( kind.equals("pow") ) {
+      else if ( kind.equals("pow") ) {
            double val1 = first.evaluate();
            double val2 = second.evaluate();
            return Math.pow(val1, val2);
-       }
+      }
 
-       else if ( kind.equals("opp") ) {
+      else if ( kind.equals("opp") ) {
            double val = first.evaluate();
            return -val;
-       }
+      }
 
-       else if (kind.equals("lt")) {
+      else if (kind.equals("lt")) {
            double val1 = first.evaluate();
            double val2 = second.evaluate();
-           if (val1 < val2) {
-               return 1;
-           }
+           if (val1 < val2) return 1;
            else return 0;
       }
-//TODO
+
       else if (kind.equals("le")) {
           double val1 = first.evaluate();
           double val2 = second.evaluate();
-          return Double.parseDouble(null);
-
+          if (val1 <= val2) return 1;
+          else return 0;
       }
-//TODO
+
       else if (kind.equals("eq")) {
           double val1 = first.evaluate();
           double val2 = second.evaluate();
-          return Double.parseDouble(null);
-
+          if (val1 == val2) return 1;
+          else return 0;
       }
-//TODO
+
       else if (kind.equals("ne")) {
           double val1 = first.evaluate();
           double val2 = second.evaluate();
-          return Double.parseDouble(null);
+          if (val1 != val2) return 1;
+          else return 0;
       }
 
       else if (kind.equals("or")) {
