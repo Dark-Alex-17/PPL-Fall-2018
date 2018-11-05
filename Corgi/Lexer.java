@@ -179,7 +179,7 @@ public class Lexer {
 //TODO
            if (state == 2) {
                // see if data matches any special words
-               if (data.equals("input")) {
+               if (data.equals("input") || data.equals("nl")) {
                    return new Token("bif0", data);
                }
                else if (data.equals("sqrt") || data.equals("cos") ||
@@ -195,14 +195,17 @@ public class Lexer {
                         data.equals("and")) {
                    return new Token("bif2", data);
                }
+               /* I belive that these need to be deleted
                else if (data.equals("print")) {
                    return new Token("print", "");
                }
                else if (data.equals("newline")) {
                    return new Token("newline", "");
                }
+               */
+
                else if (data.equals("def")) {
-                   return new Token("funcDef", "");
+                   return new Token("var", data);
                }
                else if (data.equals("end")) {
                    return new Token("end", "");
@@ -213,9 +216,7 @@ public class Lexer {
                else if (data.equals("return")) {
                    return new Token("return", "");
                }
-               else {// Lexer error
-                   error("somehow Lexer FA halted in bad state " + state);
-                   return null;
+               else { return new Token("var", data);
                }
            }
            else if (state == 3 || state == 4) {

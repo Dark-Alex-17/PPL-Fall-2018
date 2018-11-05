@@ -136,6 +136,16 @@ System.out.println("has " + number + " children");
   // (for nodes that don't return a value)
    public void execute() {
 
+      if (kind.equals("prgrm")) {
+          if(first != null) first.evaluate();
+          else  error("Corgi programs must begin with a function call");
+      }
+
+      if (kind.equals("fdef")) {
+          if (first != null) first.evaluate();
+            if (second != null) second.evaluate();
+      }
+
       if ( kind.equals("stmts") ) {
           if (first != null) {
               first.execute();
@@ -197,6 +207,10 @@ System.out.println("has " + number + " children");
       else if (kind.equals("not")) {
           double val = first.evaluate();
           table.store(info, val);
+      }
+
+      else if(kind.equals("return")) {
+          return;
       }
       else {
          error("Unknown kind of node [" + kind + "]");
