@@ -9,7 +9,7 @@ import java.util.Scanner;
 public class Node {
 
   public static int count = 0;  // maintain unique id for each node
-
+  private static double rv; // to store return value
   private int id;
 
   private String kind;  // non-terminal or terminal category for the node
@@ -136,12 +136,19 @@ System.out.println("has " + number + " children");
   // (for nodes that don't return a value)
    public void execute() {
 
-      if (kind.equals("prgrm")) {
-          if(first != null) first.evaluate();
-          else  error("Corgi programs must begin with a function call");
-      }
+       if(kind.equals("prgrm")) {
+           if(first != null) {
+               first.evaluate();
+           }
+           else {
+               error("Corgi programs must begin with a function call");
+           }
+           if(second != null){
+               second.evaluate();  // Not sure if this is correct
+           }
+       }
 
-      if (kind.equals("fdef")) {
+       if (kind.equals("fDef")) {
           if (first != null) first.evaluate();
             if (second != null) second.evaluate();
       }
@@ -220,8 +227,11 @@ System.out.println("has " + number + " children");
 
    // compute and return value produced by this node
    public double evaluate() {
+      if (kind.equals("fCall")) {
+          return 0;
+      }
 
-      if ( kind.equals("num") ) {
+      else if ( kind.equals("num") ) {
          return Double.parseDouble( info );
       }
 

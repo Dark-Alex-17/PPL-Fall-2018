@@ -42,12 +42,25 @@ public class Parser {
         else {
             lex.putBackToken( token );
             Node second = parseFuncDefs();
-            return new Node( "fDef", first, second, null );
+            return new Node( "fDefs", first, second, null );
         }
     }
 
     private Node parseParams() {
         System.out.println("-----> parsing <params>");
+        Token token = lex.getNextToken();
+        String param = token.getDetails();
+        token = lex.getNextToken();
+
+        if(token.getDetails() == ")"){
+            return new Node("params", param, null, null, null);
+        } else {
+            errorCheck(token, "single", ",");
+            Node first = parseParams();
+            return new Node("params", param, first, null, null);
+        }
+
+        /*
         Token token = lex.getNextToken();
 
         if(token.matches("single", ",")) {
@@ -59,6 +72,7 @@ public class Parser {
             lex.putBackToken(token);
             return new Node("var",token.getDetails(),null,null,null);
         }
+        */
     }
 
 
@@ -70,7 +84,7 @@ public class Parser {
         // look ahead to see if there are more statement's
         Token token = lex.getNextToken();
 
-        if ( token.isKind("eof") ) {
+        if ( token.isKind("eof") || token.matches("var", "else") || token.isKind( "end")) {
             return new Node( "stmts", first, null, null );
         }
         else {
@@ -89,34 +103,15 @@ public class Parser {
         token = lex.getNextToken();
 
         if (token.isKind("single")) {
-            return new Node("fcall", function, null, null, null);
+            return new Node("fCall", function, null, null, null);
         }
         else {
             lex.putBackToken(token);
             Node first = parseArgs();
             token = lex.getNextToken();
             errorCheck(token, "single", ")");
-            return new Node("fcall", function, first, null, null);
+            return new Node("fCall", function, first, null, null);
         }
-/*
-        if (token.isKind("var")) {
-            token = lex.getNextToken();
-            errorCheck(token, "single", "(");
-            token = lex.getNextToken();
-            if (token.isKind("args")) {
-                Node first = parseArgs();
-                token = lex.getNextToken();
-                errorCheck(token, "single", ")");
-
-                return new Node(token.getDetails(), first, null, null);
-            }
-            errorCheck(token, "single", ")");
-
-            return new Node(token.getDetails(), null, null, null);
-        }
-        System.err.println("This is an error in parseFuncCall");
-        return null; //This is an error
-        */
     }
 
     private Node parseArgs() {
@@ -124,6 +119,15 @@ public class Parser {
         Node first = parseExpr();
         Token token = lex.getNextToken();
 
+        if(token.getDetails() == ")"){
+            lex.putBackToken(token);
+            return new Node("args", first, null, null);
+        } else {
+            errorCheck(token, "single", ",");
+            Node second = parseArgs();
+            return new Node("args", first, second, null);
+        }
+/*
         if(token.matches("single", ",")) {
             Node second = parseArgs();
             return new Node(token.getDetails(), first, second, null);
@@ -132,6 +136,7 @@ public class Parser {
             lex.putBackToken(token);
             return new Node(token.getDetails(), first, null, null);
         }
+        */
     }
 //TODO
     private Node parseStatement() {
@@ -151,6 +156,42 @@ public class Parser {
             errorCheck(token, "single", "=");
             Node first = parseExpr();
             return new Node("sto", varName, first, null, null);
+        }
+
+        else if (token.isKind("var") && token.getDetails().equals("if")) {
+            Node first = parseExpr();
+            token = lex.getNextToken();
+            if (token.getDetails().equals("else")) {
+                token = lex.getNextToken();
+                if (token.getDetails().equals("end")) {
+                    return new Node("if", first,null,null);
+                }
+                else {
+                    lex.putBackToken(token);
+                    Node third = parseStatements();
+                    return new Node("if",first,null, third);
+                }
+            }
+
+            else {
+                lex.putBackToken(token);
+                Node second = parseStatements();
+                token = lex.getNextToken();
+
+                if(token.getDetails().equals("end")) {
+                    return new Node("if", first, second,null);
+                }
+                else {
+                    lex.putBackToken(token);
+                    Node third = parseStatements();
+                    return new Node("if", first, second, third);
+                }
+            }
+        }
+
+        else if (token.isKind("return")) {
+            Node first = parseExpr();
+            return new Node("return",first, null, null);
         }
 
         //---------------->>> <funcCall>
@@ -318,13 +359,13 @@ public class Parser {
 
             //<stmts> not part it
             if(token.getDetails().equals("end")) {
-                return new Node("funcDef", funcName, null, null, null);
+                return new Node("fDef", funcName, null, null, null);
             }
             //<stmts> is part of it
             else{
                 lex.putBackToken(token);
                 Node second = parseStatements();
-                return new Node("funcDef", funcName, null, second, null);
+                return new Node("fDef", funcName, null, second, null);
             }
         }
         //<params> is part of it
@@ -335,13 +376,13 @@ public class Parser {
 
             //<stmts> not part of it
             if(token.getDetails().equals("end")) {
-                return new Node("funcDef", funcName, first, null, null);
+                return new Node("fDef", funcName, first, null, null);
             }
             //<stmts> is part of it
             else{
                 lex.putBackToken(token);
                 Node second = parseStatements();
-                return new Node("funcDef", funcName, first, second, null);
+                return new Node("fDef", funcName, first, second, null);
             }
         }
     }
