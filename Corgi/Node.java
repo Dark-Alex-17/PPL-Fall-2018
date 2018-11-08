@@ -201,7 +201,7 @@ System.out.println("has " + number + " children");
        else if ( kind.equals("input") ) {
           return keys.nextDouble();          
        }
-       
+
        else if ( kind.equals("sqrt") || kind.equals("cos") ||
                  kind.equals("sin") || kind.equals("atan")    
                ) {
@@ -231,6 +231,50 @@ System.out.println("has " + number + " children");
            double val = first.evaluate();
            return -val;
        }
+
+      else if(kind.equals("lt")){
+          double x = first.evaluate();
+          double y = second.evaluate();
+          if (x<y){
+              return 1;
+          }
+          else{
+              return 0;
+          }
+      }
+
+      else if(kind.equals("le")) {
+          double x = first.evaluate();
+          double y = second.evaluate();
+          if(x<=y){
+              return 1;
+          }
+          else {
+              return 0;
+          }
+      }
+
+      else if(kind.equals("eq")) {
+          double x = first.evaluate();
+          double y = second.evaluate();
+          if(x == y) {
+              return 1;
+          }
+          else {
+              return 0;
+          }
+      }
+
+      else if(kind.equals("ne")) {   //TODO think this is right, no guarantees
+          double x = first.evaluate();
+          double y = second.evaluate();
+          if(x!=y){
+              return 1;
+          }
+          else {
+              return 0;
+          }
+      }
 
        else {
           error("Unknown node kind [" + kind + "]");
