@@ -213,6 +213,12 @@ public class Lexer {
                else if (data.equals("return")) {
                    return new Token("return", "");
                }
+               else if (data.equals("end")) {
+                   return new Token("end","");
+               }
+               else if (data.equals("end")) {
+                   return new Token("end","");
+               }
                else {// Lexer error
                    error("somehow Lexer FA halted in bad state " + state);
                    return null;

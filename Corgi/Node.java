@@ -232,7 +232,7 @@ System.out.println("has " + number + " children");
           else
               return val1 / val2;
        }
-
+     
       else if ( kind.equals("input") ) {
           return keys.nextDouble();
       }
@@ -318,6 +318,50 @@ System.out.println("has " + number + " children");
               return 1;
           }
           else return 0;
+      }
+
+      else if(kind.equals("lt")){
+          double x = first.evaluate();
+          double y = second.evaluate();
+          if (x<y){
+              return 1;
+          }
+          else{
+              return 0;
+          }
+      }
+
+      else if(kind.equals("le")) {
+          double x = first.evaluate();
+          double y = second.evaluate();
+          if(x<=y){
+              return 1;
+          }
+          else {
+              return 0;
+          }
+      }
+
+      else if(kind.equals("eq")) {
+          double x = first.evaluate();
+          double y = second.evaluate();
+          if(x == y) {
+              return 1;
+          }
+          else {
+              return 0;
+          }
+      }
+
+      else if(kind.equals("ne")) {   //TODO think this is right, no guarantees
+          double x = first.evaluate();
+          double y = second.evaluate();
+          if(x!=y){
+              return 1;
+          }
+          else {
+              return 0;
+          }
       }
 
        else {
