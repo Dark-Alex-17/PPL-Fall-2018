@@ -5,6 +5,7 @@
 
 import java.awt.*;
 import java.util.Scanner;
+import java.util.Stack;
 
 public class Node {
 
@@ -136,7 +137,23 @@ System.out.println("has " + number + " children");
   // (for nodes that don't return a value)
    public void execute() {
 
-      if ( kind.equals("stmts") ) {
+      if(kind.equals("program")){
+          nTable = new Stack<MemTable>();
+          if (second != null) {
+              fRoot = second;
+          }
+          else {
+              error("Function definition(s) not found!");
+          }
+          if (first != null) {
+              first.evaluate();
+          }
+          else {
+              error("Initial function call missing!");
+          }
+      }
+
+     else if ( kind.equals("stmts") ) {
           if (first != null) {
               first.execute();
           }
