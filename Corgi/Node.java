@@ -164,40 +164,6 @@ System.out.println("has " + number + " children");
           table.store(info, val);
       }
 
-      else if (kind.equals("lt")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
-
-      else if (kind.equals("le")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
-
-      else if (kind.equals("eq")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
-
-      else if (kind.equals("ne")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
-
-      else if (kind.equals("or")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
-
-      else if (kind.equals("and")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
-
-      else if (kind.equals("not")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
       else {
          error("Unknown kind of node [" + kind + "]");
       }
