@@ -276,6 +276,38 @@ System.out.println("has " + number + " children");
           }
       }
 
+      else if(kind.equals("or")) {
+          double x = first.evaluate();
+          double y = second.evaluate();
+          if( x != 0 || y != 0){
+              return 1;
+          }
+          else {
+              return 0;
+          }
+      }
+
+      else if(kind.equals("and")) {
+          double x = first.evaluate();
+          double y = second.evaluate();
+          if( x != 0 && y != 0) {
+              return 1;
+          }
+          else {
+              return 0;
+          }
+      }
+
+      else if(kind.equals("not")) {
+          double x = first.evaluate();
+          if( x == 0) {
+              return 1;
+          }
+          else {
+              return 0;
+          }
+      }
+
        else {
           error("Unknown node kind [" + kind + "]");
           return 0;
