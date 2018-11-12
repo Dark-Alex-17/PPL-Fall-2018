@@ -5,6 +5,7 @@
 
 import java.awt.*;
 import java.util.Scanner;
+import java.util.Stack;
 
 public class Node {
 
@@ -136,7 +137,23 @@ System.out.println("has " + number + " children");
   // (for nodes that don't return a value)
    public void execute() {
 
-      if ( kind.equals("stmts") ) {
+      if(kind.equals("program")){
+          nTable = new Stack<MemTable>();
+          if (second != null) {
+              fRoot = second;
+          }
+          else {
+              error("Function definition(s) not found!");
+          }
+          if (first != null) {
+              first.evaluate();
+          }
+          else {
+              error("Initial function call missing!");
+          }
+      }
+
+     else if ( kind.equals("stmts") ) {
           if (first != null) {
               first.execute();
           }
@@ -164,40 +181,6 @@ System.out.println("has " + number + " children");
           table.store(info, val);
       }
 
-      else if (kind.equals("lt")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
-
-      else if (kind.equals("le")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
-
-      else if (kind.equals("eq")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
-
-      else if (kind.equals("ne")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
-
-      else if (kind.equals("or")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
-
-      else if (kind.equals("and")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
-
-      else if (kind.equals("not")) {
-          double val = first.evaluate();
-          table.store(info, val);
-      }
       else {
          error("Unknown kind of node [" + kind + "]");
       }
@@ -318,50 +301,6 @@ System.out.println("has " + number + " children");
               return 1;
           }
           else return 0;
-      }
-
-      else if(kind.equals("lt")){
-          double x = first.evaluate();
-          double y = second.evaluate();
-          if (x<y){
-              return 1;
-          }
-          else{
-              return 0;
-          }
-      }
-
-      else if(kind.equals("le")) {
-          double x = first.evaluate();
-          double y = second.evaluate();
-          if(x<=y){
-              return 1;
-          }
-          else {
-              return 0;
-          }
-      }
-
-      else if(kind.equals("eq")) {
-          double x = first.evaluate();
-          double y = second.evaluate();
-          if(x == y) {
-              return 1;
-          }
-          else {
-              return 0;
-          }
-      }
-
-      else if(kind.equals("ne")) {   //TODO think this is right, no guarantees
-          double x = first.evaluate();
-          double y = second.evaluate();
-          if(x!=y){
-              return 1;
-          }
-          else {
-              return 0;
-          }
       }
 
        else {
