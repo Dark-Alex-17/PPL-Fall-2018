@@ -64,7 +64,7 @@ public class Lexer {
                        data += (char) sym;
                        state = 5;
                    }
-                   else if (sym == '\"') {
+                   else if (sym == '"') {
                        state = 6;
                    }
                    else if (sym == '+' || sym == '-' || sym == '*' ||
@@ -176,12 +176,13 @@ public class Lexer {
 
            // generate token depending on stopping state
            Token token;
-//TODO
+
            if (state == 2) {
                // see if data matches any special words
-               if (data.equals("input")) {
+               if (data.equals("input") || (data.equals("nl"))) {
                    return new Token("bif0", data);
                }
+
                else if (data.equals("sqrt") || data.equals("cos") ||
                        data.equals("sin") || data.equals("atan") ||
                        data.equals("trunc") || data.equals("round") ||
@@ -189,39 +190,36 @@ public class Lexer {
                ) {
                    return new Token("bif1", data);
                }
+
                else if (data.equals("pow") || data.equals("lt") ||
                         data.equals("le") || data.equals("eq") ||
                         data.equals("ne") || data.equals("or") ||
                         data.equals("and")) {
                    return new Token("bif2", data);
                }
+               /* it think that it needs to be removed. tbd
                else if (data.equals("print")) {
                    return new Token("print", "");
                }
                else if (data.equals("newline")) {
                    return new Token("newline", "");
                }
+
                else if (data.equals("def")) {
                    return new Token("funcDef", "");
                }
-               else if (data.equals("end")) {
-                   return new Token("end", "");
-               }
+
                else if (data.equals("if")) {
                    return new Token("else", "");
                }
+
                else if (data.equals("return")) {
                    return new Token("return", "");
                }
-               else if (data.equals("end")) {
-                   return new Token("end","");
-               }
-               else if (data.equals("end")) {
-                   return new Token("end","");
-               }
+*/
+
                else {// Lexer error
-                   error("somehow Lexer FA halted in bad state " + state);
-                   return null;
+                   return new Token("var", data);
                }
            }
            else if (state == 3 || state == 4) {
