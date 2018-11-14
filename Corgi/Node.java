@@ -10,8 +10,11 @@ import java.util.Stack;
 public class Node {
 
   public static int count = 0;  // maintain unique id for each node
-
+  public static double rv;
   private int id;
+
+  private static Node fNode, aNode, pNode;
+  private static boolean rb; //return boolean
 
   private String kind;  // non-terminal or terminal category for the node
   private String info;  // extra information about the node such as
@@ -21,7 +24,7 @@ public class Node {
   private Node first, second, third;
 
   // memory table shared by all nodes
-  private static MemTable table = new MemTable();
+  private static Stack<MemTable> nTable;
 
   private static Scanner keys = new Scanner( System.in );
 
@@ -137,25 +140,62 @@ System.out.println("has " + number + " children");
   // (for nodes that don't return a value)
    public void execute() {
 
-      if(kind.equals("program")){
-          nTable = new Stack<MemTable>();
-          if (second != null) {
-              fRoot = second;
+       if (kind.equals("prgrm")) {
+           nTable = new Stack<MemTable>();
+           if (second != null)
+               fNode = second;
+           else
+               error("Program does have any function deffinitions");
+           if (first != null)
+               first.evaluate();
+           else
+               error("Program does not have an initial function call");
+       }
+
+       else if (kind.equals("fDef")) {
+           MemTable table = nTable.pop();
+           pNode = first;
+           while(aNode != null && pNode != null){
+               table.store(pNode.info, aNode.first.evaluate());
+               if(pNode != null)
+                   pNode = pNode.first;
+               if(aNode != null)
+                   aNode = aNode.second;
+           }
+           if(aNode != null || pNode != null)
+               error("The number of arguments passed to function [" + info + "] does not match the number of parameters");
+           nTable.push(table);
+           if(second != null)
+               second.execute();
+       }
+
+      else if (kind.equals("return")) {
+          rv = first.evaluate();
+          rb = true;
+      }
+
+      else if (kind.equals("if")) {
+          if(first.evaluate() != 0) {
+              if (second != null) {
+                  second.execute();
+              }
           }
           else {
-              error("Function definition(s) not found!");
-          }
-          if (first != null) {
-              first.evaluate();
-          }
-          else {
-              error("Initial function call missing!");
+              if (third != null) {
+                  third.execute();
+              }
           }
       }
 
-     else if ( kind.equals("stmts") ) {
-          if (first != null) {
+      else if (kind.equals("stmts")) {
+          if(first != null && first.kind.equals("fCall")) {
+              first.evaluate();
+          }
+          else if (first != null) {
               first.execute();
+          }
+          if (second != null && !rb) {
+              second.execute();
           }
       }
 
@@ -163,7 +203,7 @@ System.out.println("has " + number + " children");
          System.out.print( info );
       }
 
-      else if ( kind.equals("prtexp") ) {
+      else if ( kind.equals("print") ) {
           double value = first.evaluate();
           if (value % 1 == 0) {
               System.out.print((int)value);
@@ -178,7 +218,9 @@ System.out.println("has " + number + " children");
 
       else if ( kind.equals("sto") ) {
           double val = first.evaluate();
-          table.store(info, val);
+          MemTable table = nTable.pop();
+          table.store(info,val);
+          nTable.push(table);
       }
 
       else {
@@ -190,12 +232,40 @@ System.out.println("has " + number + " children");
    // compute and return value produced by this node
    public double evaluate() {
 
-      if ( kind.equals("num") ) {
+      if (kind.equals("fCall")) {
+          boolean located = false;
+          boolean eof = false;
+          nTable.push(new MemTable());
+          aNode = first;
+          Node node = fNode;
+          while (!located && !eof) {
+              if (info.equals(node.first.info)) {
+                  located = true;
+                  node.first.execute();
+              }
+              else {
+                  if (node.second != null) {
+                      node = node.second;
+                  }
+                  else {
+                      eof = true;
+                  }
+              }
+          }
+          nTable.pop();
+          rb = false;
+          return rv;
+      }
+
+      else if ( kind.equals("num") ) {
          return Double.parseDouble( info );
       }
 
       else if ( kind.equals("var") ) {
-          return table.retrieve( info );
+          MemTable table = nTable.pop();
+          double value = table.retrieve(info);
+          nTable.push(table);
+          return value;
       }
 
       else if ( kind.equals("+") || kind.equals("-") ) {
@@ -242,6 +312,14 @@ System.out.println("has " + number + " children");
            double val1 = first.evaluate();
            double val2 = second.evaluate();
            return Math.pow(val1, val2);
+      }
+
+      else if (kind.equals("round")) {
+          return Math.round(first.evaluate());
+      }
+
+      else if (kind.equals("trunc")) {
+          return Math.floor(first.evaluate());
       }
 
       else if ( kind.equals("opp") ) {

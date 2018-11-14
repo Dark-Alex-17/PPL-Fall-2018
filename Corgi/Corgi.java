@@ -18,11 +18,17 @@ public class Corgi {
     // start with <statements>
     Node root = parser.parseProgram();
 
-    // display parse tree for debugging/testing:
-//    TreeViewer viewer = new TreeViewer("Parse Tree", 0, 0, 800, 500, root );
+    //display parse tree for debugging/testing:
+    //TreeViewer viewer = new TreeViewer("Parse Tree", 0, 0, 800, 500, root );
 
     // execute the parse tree
     root.execute();
+
+    System.out.println("Would you like to view the parse tree?[y/n]: ");
+    char c = keys.next().charAt(0);
+    if (c == 'y') {
+      TreeViewer viewer = new TreeViewer("Parse Tree", 0, 0, 800, 500, root );
+    }
 
   }// main
 
