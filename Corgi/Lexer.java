@@ -16,7 +16,7 @@ public class Lexer {
 
    // one lookahead physical symbol
    private int lookahead;
- 
+
    // construct a Lexer ready to produce tokens from a file
    public Lexer( String fileName ) {
      try {
@@ -28,7 +28,7 @@ public class Lexer {
      stack = new Stack<Token>();
      lookahead = 0;  // indicates no lookahead symbol present
    }// constructor
- 
+
    // produce the next token
    private Token getNext() {
        if (!stack.empty()) {
@@ -76,17 +76,10 @@ public class Lexer {
                        done = true;
                    }
                    else if (sym == '/') {
-                     int sym1 = getNextSymbol();
-                     if (sym1 == '*') {
-                         state = 10;
-                     }
-                     else {
-                         data += (char) sym1;
-                         putBackSymbol(sym1);
-                         state = 8;
-                         done = true;
-                     }
+                     data += (char) sym;
+                     state = 10;
                    }
+
                    else if (sym == -1) {// end of file
                        state = 9;
                        done = true;
@@ -96,6 +89,7 @@ public class Lexer {
                                + sym + " in state " + state);
                    }
                }
+
                else if (state == 2) {
                    if (letter(sym) || digit(sym)) {
                        data += (char) sym;
@@ -152,21 +146,33 @@ public class Lexer {
                    }
                }
                else if (state == 10) {
-                   if (sym == '*') {
-                       int sym1 = getNextSymbol();
-                       if (sym1 == '/') {
-                           state = 11;
-                           done = true;
-                       }
-                       else {
-                           putBackSymbol(sym1);
-                           state = 10;
-                       }
+                   if ( sym == '*'){
+                       state = 11;
+                       data = "";
                    }
                    else {
-                       data += (char)sym;
-                       state = 10;
+                       putBackSymbol( sym );
+                       state = 8;
+                       done = true;
                    }
+               }
+
+               else if ( state == 11 ){
+                   if( sym == '*'){
+                       state = 12;
+                   }
+               }
+
+               else if ( state == 12 ){
+                   if( sym == '/'){
+                       state = 13;
+                   }
+                   else { state = 11; }
+               }
+
+               else if ( state == 13 ){
+                   putBackSymbol(sym);
+                   state = 1;
                }
 
                // note: states 7, 8, and 9 are accepting states with
